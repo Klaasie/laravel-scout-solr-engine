@@ -1,0 +1,28 @@
+{
+    "name": "klaasie/scout-solr-engine",
+    "description": "A Apache Solr driver for laravel scout",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Klaas Poortinga",
+            "email": "poortinga.k@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": "^7.4|^8.0",
+        "laravel/scout": "^9.2",
+        "solarium/solarium": "^6.1"
+},
+    "autoload": {
+        "psr-4": {
+            "Scout\\Solr\\": "src/"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit":  "^8.5.8|^9.3.3",
+        "phpmd/phpmd": "^2.10",
+        "squizlabs/php_codesniffer": "^3.6"
+    }
+}

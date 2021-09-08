@@ -24,7 +24,7 @@ services:
         depends_on:
             - mysql
             - redis
-            - meilisearch
+            - solr
             - selenium
     mysql:
         image: 'mysql:8.0'
@@ -56,18 +56,14 @@ services:
           test: ["CMD", "redis-cli", "ping"]
           retries: 3
           timeout: 5s
-    meilisearch:
-        image: 'getmeili/meilisearch:latest'
+    solr:
+        image: solr:latest
         ports:
-            - '${FORWARD_MEILISEARCH_PORT:-7700}:7700'
+            - "${FORWARD_SOLR_PORT:-8981}:8983"
         volumes:
-            - 'sailmeilisearch:/data.ms'
+            - 'sailsolr:/data.ms'
         networks:
             - sail
-        healthcheck:
-          test: ["CMD", "wget", "--no-verbose", "--spider",  "http://localhost:7700/health"]
-          retries: 3
-          timeout: 5s
     mailhog:
         image: 'mailhog/mailhog:latest'
         ports:
@@ -89,5 +85,5 @@ volumes:
         driver: local
     sailredis:
         driver: local
-    sailmeilisearch:
+    sailsolr:
         driver: local

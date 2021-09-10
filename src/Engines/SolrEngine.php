@@ -3,10 +3,13 @@
 namespace Scout\Solr\Engines;
 
 use Illuminate\Contracts\Config\Repository;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Laravel\Scout\Builder;
 use Laravel\Scout\Engines\Engine;
 use Scout\Solr\ClientInterface;
+use Solarium\QueryType\Select\Result\Document;
+use Solarium\QueryType\Select\Result\Result;
 
 class SolrEngine extends Engine
 {
@@ -45,7 +48,7 @@ class SolrEngine extends Engine
         // TODO: Implement delete() method.
     }
 
-    public function search(Builder $builder)
+    public function search(Builder $builder): Result
     {
         return $this->performSearch($builder, array_filter([
 //            'filters' => $this->filters($builder),
@@ -63,9 +66,30 @@ class SolrEngine extends Engine
         // TODO: Implement mapIds() method.
     }
 
+    /**
+     * @param Builder $builder
+     * @param Result $results
+     * @param Model $model
+     * @return Collection|void
+     */
     public function map(Builder $builder, $results, $model)
     {
-        // TODO: Implement map() method.
+        if ($results->getNumFound() === 0) {
+            return $model->newCollection();
+        }
+
+        $objectIds = collect($results->getDocuments())->map(static function (Document $document) {
+            return $document->getFields()['id'];
+        })->values()->all();
+
+        $objectIdPositions = array_flip($objectIds);
+
+        return $model->getScoutModelsByIds($builder, $objectIds)
+            ->filter(function ($model) use ($objectIds) {
+                return in_array($model->getScoutKey(), $objectIds, false);
+            })->sortBy(function ($model) use ($objectIdPositions) {
+                return $objectIdPositions[$model->getScoutKey()];
+            })->values();
     }
 
     public function lazyMap(Builder $builder, $results, $model)
@@ -113,15 +137,12 @@ class SolrEngine extends Engine
         return $this->client->coreAdmin($coreAdminQuery);
     }
 
-    protected function performSearch(Builder $builder, array $options = [])
+    protected function performSearch(Builder $builder, array $options = []): Result
     {
         $query = $this->client->setCore($builder->model)->createSelect();
         $query->setQuery($builder->query);
         $query->setStart(0)->setRows($options['limit'] ?? $this->config->get('scout-solr.select.limit'));
 
-        $result = $this->client->select($query);
-        dd($result, $builder);
-
-        return $result;
+        return $this->client->select($query);
     }
 }

@@ -3,7 +3,7 @@ version: '3'
 services:
     laravel.test:
         build:
-            context: ./vendor/laravel/sail/runtimes/8.0
+            context: ./docker/8.0
             dockerfile: Dockerfile
             args:
                 WWWGROUP: '${WWWGROUP}'
@@ -18,7 +18,7 @@ services:
             XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
             XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
         volumes:
-            - '.:/var/www/html'
+            - '../:/var/www/html'
         networks:
             - sail
         depends_on:
@@ -57,11 +57,17 @@ services:
           retries: 3
           timeout: 5s
     solr:
-        image: solr:latest
+        build:
+            context: ./docker/solr
+            dockerfile: Dockerfile
+        image: solr/example
         ports:
             - "${FORWARD_SOLR_PORT:-8981}:8983"
         volumes:
             - 'sailsolr:/data.ms'
+        command:
+            - solr-precreate
+            - gettingstarted
         networks:
             - sail
     mailhog:

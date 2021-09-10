@@ -12,6 +12,19 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class ScoutSolrServiceProvider extends ServiceProvider
 {
+    public function register(): void
+    {
+        $this->mergeConfigFrom(__DIR__.'/../config/scout-solr.php', 'scout-solr');
+
+        $this->app->bind(ClientInterface::class, static function (Application $app) {
+            return new Client(
+                new Curl(),
+                new EventDispatcher(),
+                $app['config']->get('scout-solr.endpoints.default')
+            );
+        });
+    }
+
     /**
      * @throws BindingResolutionException
      */
@@ -24,16 +37,5 @@ class ScoutSolrServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../config/scout-solr.php' => config_path('scout-solr.php'),
         ]);
-    }
-
-    public function register(): void
-    {
-        $this->app->bind(\Solarium\Client::class, static function (Application $app) {
-            return new \Solarium\Client(
-                new Curl(),
-                new EventDispatcher(),
-                $app['config']->get('scout-solr.endpoints')
-            );
-        });
     }
 }

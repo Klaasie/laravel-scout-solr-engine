@@ -20,4 +20,14 @@ __Run the user seeder___
 vendor/bin/sail artisan db:seed --class=DatabaseSeeder   
 ```
 
-Navigate to localhost to try the implementation.
+__Create the Solr index__
+```
+vendor/bin/sail artisan scout:index users   
+```
+
+__Import the users__
+```
+vendor/bin/sail artisan scout:import "App\Models\User"    
+```
+
+Navigate to [localhost](http://localhost) to try the implementation.

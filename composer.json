@@ -2,6 +2,15 @@
     "name": "klaasie/scout-solr-engine",
     "description": "A Apache Solr driver for laravel scout",
     "type": "library",
+    "keywords": [
+        "apache",
+        "solr",
+        "driver",
+        "engine",
+        "laravel",
+        "scout",
+        "search"
+    ],
     "license": "MIT",
     "authors": [
         {

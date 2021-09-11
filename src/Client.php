@@ -11,6 +11,7 @@ class Client extends ClientBase implements ClientInterface
 {
     public function setCore(Model $model): self
     {
+        /** @noinspection PhpUndefinedMethodInspection */
         $searchableAs = $model->searchableAs();
 
         if (is_array($searchableAs)) {

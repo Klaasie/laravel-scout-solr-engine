@@ -10,7 +10,7 @@ class UserController extends Controller
     public function index(): View
     {
         return view('welcome', [
-            'users' => User::search('*:*')->get(),
+            'users' => User::search('*:*')->paginate(15)->onEachSide(1),
         ]);
     }
 }

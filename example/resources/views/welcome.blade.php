@@ -8,8 +8,11 @@
 
         <!-- Fonts -->
         <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Two+Tone|Material+Icons+Round|Material+Icons+Sharp" rel="stylesheet">
     </head>
     <body>
+        <div class="bg-gray-100 dark:bg-gray-900 py-10">
+        </div>
         <div class="relative flex items-top justify-center min-h-screen bg-gray-100 dark:bg-gray-900 sm:items-center py-4 sm:pt-0">
             <div class="flex flex-col">
                 <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
@@ -29,6 +32,9 @@
                                         </th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Created at
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Updated at
                                         </th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Updated at
@@ -54,10 +60,21 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             {{ optional($user->getUpdatedAt())->format('Y-m-d H:i:s') }}
                                         </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <a href="#" class="text-gray-400 hover:text-blue-400 mx-2">
+                                                <i class="material-icons-outlined text-base md-18">edit</i>
+                                            </a>
+                                            <a href="#" class="text-gray-400 hover:text-red-400 ml-2">
+                                                <i class="material-icons-round text-base md-18">delete_outline</i>
+                                            </a>
+                                        </td>
                                     </tr>
                                     @endforeach
                                 </tbody>
                             </table>
+                            <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+                                {{ $users->render() }}
+                            </div>
                         </div>
                     </div>
                 </div>

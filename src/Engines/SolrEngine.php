@@ -199,34 +199,33 @@ class SolrEngine extends Engine
         }
 
         $query = $this->client->createSelect();
-        $query->setQuery($builder->query)
-            ->setStart($options['offset'] ?? 0)
+        if (array_key_exists('filters', $options)) {
+            $query->setQuery($options['filters']);
+        } else {
+            $query->setQuery($builder->query);
+        }
+
+        $query->setStart($options['offset'] ?? 0)
             ->setRows($options['limit'] ?? $this->config->get('scout-solr.select.limit'));
+
+
 
         return $this->client->select($query);
     }
 
     protected function filters(Builder $builder): string
     {
-        // @todo
+        $filters = collect($builder->wheres)->map(function ($value, $key) {
+            return sprintf('%s:%s', $key, $value);
+        });
 
-        return '';
+        foreach ($builder->whereIns as $key => $values) {
+            $filters->push(sprintf('%s:(%s)', $key, collect($values)->map(function ($value) use ($key) {
+                return $value;
+            })->values()->implode(' OR ')));
+        }
 
-//        $filters = collect($builder->wheres)->map(function ($value, $key) {
-//            return is_numeric($value)
-//                ? sprintf('%s=%s', $key, $value)
-//                : sprintf('%s="%s"', $key, $value);
-//        });
-//
-//        foreach ($builder->whereIns as $key => $values) {
-//            $filters->push(sprintf('(%s)', collect($values)->map(function ($value) use ($key) {
-//                return filter_var($value, FILTER_VALIDATE_INT) !== false
-//                    ? sprintf('%s=%s', $key, $value)
-//                    : sprintf('%s="%s"', $key, $value);
-//            })->values()->implode(' OR ')));
-//        }
-//
-//        return $filters->values()->implode(' AND ');
+        return $filters->values()->implode(' AND ');
     }
 
     /**

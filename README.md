@@ -1,17 +1,16 @@
 # Laravel Scout Apache Solr driver
+[![GitHub issues](https://img.shields.io/github/issues/Klaasie/laravel-scout-solr-engine)](https://github.com/Klaasie/laravel-scout-solr-engine/issues)
+[![Latest Stable Version](http://poser.pugx.org/klaasie/scout-solr-engine/v)](https://packagist.org/packages/klaasie/scout-solr-engine)
+[![License](http://poser.pugx.org/klaasie/scout-solr-engine/license)](https://packagist.org/packages/klaasie/scout-solr-engine) 
+[![PHP Version Require](http://poser.pugx.org/klaasie/scout-solr-engine/require/php)](https://packagist.org/packages/klaasie/scout-solr-engine)
+
 This package provides a basic implementation of the Apache Solr search engine within Laravel Scout.
 
----
-
 ## Installation
-
----
 
 `composer install klaasie/scout-solr-engine`
 
 ## config
-
----
 
 This package provides a config file that can be modified using .env variables.
 You can initialize your own config file with: 
@@ -30,8 +29,6 @@ For more information, see [https://solr.apache.org/guide/8_9/config-sets.html#co
 Within the config file a core (index) is not provided. The engine will determine which core to connect to using the `searchableAs()` method on the model.
 
 ## Example
-
----
 
 This repository provides an example laravel app showcasing the functionality of this package.
 Please refer to the [README.md](example/README.md) of the example app for information on how to get it started.

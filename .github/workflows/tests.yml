@@ -17,7 +17,11 @@ jobs:
       matrix:
         include:
           - php: 7.4
+            env:
+              LARAVEL: 8.*
           - php: 8.0
+            env:
+              LARAVEL: 8.*
     env: ${{ matrix.env }}
     steps:
       - uses: actions/checkout@v2
@@ -35,6 +39,10 @@ jobs:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
+      - name: Install Composer dependencies
+        run: |
+          composer require "laravel/framework:${LARAVEL}" --no-interaction --no-update
+          composer update --prefer-stable --prefer-dist --no-interaction
       - name: Execute tests (Unit and Feature tests) via PHPUnit
         run: ./vendor/bin/phpunit
       - name: Execute codesniffer tests

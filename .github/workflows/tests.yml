@@ -54,6 +54,5 @@ jobs:
       - name: Execute codesniffer tests
         uses: tinovyatkin/action-php-codesniffer@v1
         with:
-          files: "**.php"
           phpcs_path: ./vendor/bin/phpcs
           standard: phpcs.xml

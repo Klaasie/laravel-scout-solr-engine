@@ -46,4 +46,4 @@ jobs:
       - name: Execute tests (Unit and Feature tests) via PHPUnit
         run: ./vendor/bin/phpunit
       - name: Execute codesniffer tests
-        run: './vendor/bin/phpcs --standard=./phpcs.xml ./'
+        run: './vendor/bin/phpcs --standard=./phpcs.xml --report=checkstyle ./ | cs2pr --graceful-warnings'

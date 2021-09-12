@@ -1,5 +1,7 @@
 <?php /** @noinspection PhpUndefinedMethodInspection */
 
+declare(strict_types=1);
+
 namespace Scout\Solr\Engines;
 
 use Illuminate\Contracts\Config\Repository;
@@ -123,7 +125,7 @@ class SolrEngine extends Engine
      */
     public function lazyMap(Builder $builder, $results, $model)
     {
-        if (count($results->getNumFound()) === 0) {
+        if ($results->getNumFound() === 0) {
             return LazyCollection::make($model->newCollection());
         }
 
@@ -187,7 +189,7 @@ class SolrEngine extends Engine
 
     protected function performSearch(Builder $builder, array $options = []): Result
     {
-        $this->client->setCore($builder->model)->createSelect();
+        $this->client->setCore($builder->model);
 
         if ($builder->callback) {
             return call_user_func(
@@ -208,8 +210,6 @@ class SolrEngine extends Engine
         $query->setStart($options['offset'] ?? 0)
             ->setRows($options['limit'] ?? $this->config->get('scout-solr.select.limit'));
 
-
-
         return $this->client->select($query);
     }
 
@@ -220,7 +220,7 @@ class SolrEngine extends Engine
         });
 
         foreach ($builder->whereIns as $key => $values) {
-            $filters->push(sprintf('%s:(%s)', $key, collect($values)->map(function ($value) use ($key) {
+            $filters->push(sprintf('%s:(%s)', $key, collect($values)->map(function ($value) {
                 return $value;
             })->values()->implode(' OR ')));
         }

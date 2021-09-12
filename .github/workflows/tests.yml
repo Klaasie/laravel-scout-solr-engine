@@ -1,4 +1,3 @@
-
 name: Tests
 on:
   push:
@@ -21,13 +20,17 @@ jobs:
             env:
               LARAVEL: 8.*
               TESTBENCH: 6.*
+              PHPCS: 3.*
           - php: 8.0
             env:
               LARAVEL: 8.*
               TESTBENCH: 6.*
+              PHPCS: 3.*
     env: ${{ matrix.env }}
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -44,7 +47,13 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
       - name: Install Composer dependencies
         run: |
-          composer require "laravel/framework:${LARAVEL}" "orchestra/testbench:${TESTBENCH}" --no-interaction --no-update
+          composer require "laravel/framework:${LARAVEL}" "orchestra/testbench:${TESTBENCH}" "squizlabs/php_codesniffer:${PHPCS}" --no-interaction --no-update
           composer update --prefer-stable --prefer-dist --no-interaction
       - name: Execute tests (Unit and Feature tests) via PHPUnit
         run: ./vendor/bin/phpunit
+      - name: Execute codesniffer tests
+        uses: tinovyatkin/action-php-codesniffer@v1
+        with:
+          files: "**.php"
+          phpcs_path: ./vendor/bin/phpcs
+          standard: phpcs.xml

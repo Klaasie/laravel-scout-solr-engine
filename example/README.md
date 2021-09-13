@@ -20,14 +20,20 @@ __Run the user seeder___
 vendor/bin/sail artisan db:seed --class=DatabaseSeeder   
 ```
 
-__Create the Solr index__
+__Create the Solr indexes__
 ```
-vendor/bin/sail artisan scout:index users   
+vendor/bin/sail artisan scout:index users
+vendor/bin/sail artisan scout:index books 
 ```
 
 __Import the users__
 ```
 vendor/bin/sail artisan scout:import "App\Models\User"    
+vendor/bin/sail artisan scout:import "App\Models\Book"    
 ```
 
 Navigate to [localhost](http://localhost) to try the implementation.
+
+navigate to [solr1](http://localhost:8983) for the first solr instance containing the users index.
+
+navigate to [solr2](http://localhost:8984) for the second solr instance containing the books index.

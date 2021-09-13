@@ -25,6 +25,7 @@ services:
             - mysql
             - redis
             - solr
+            - solr2
             - selenium
     mysql:
         image: 'mysql:8.0'
@@ -62,9 +63,23 @@ services:
             dockerfile: Dockerfile
         image: solr/example
         ports:
-            - "${FORWARD_SOLR_PORT:-8981}:8983"
+            - "${FORWARD_SOLR_PORT:-8983}:8983"
         volumes:
             - 'sailsolr:/data.ms'
+        command:
+            - solr-precreate
+            - gettingstarted
+        networks:
+            - sail
+    solr2:
+        build:
+            context: ./docker/solr
+            dockerfile: Dockerfile
+        image: solr/example2
+        ports:
+            - "${FORWARD_SOLR_PORT:-8984}:8983"
+        volumes:
+            - 'sailsolr2:/data.ms'
         command:
             - solr-precreate
             - gettingstarted
@@ -92,4 +107,6 @@ volumes:
     sailredis:
         driver: local
     sailsolr:
+        driver: local
+    sailsolr2:
         driver: local

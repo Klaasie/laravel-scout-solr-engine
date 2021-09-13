@@ -22,14 +22,17 @@ return [
     */
     'endpoints' => [
         'default' => [
-            'endpoint' => [
-                'localhost' => [
-                    'host' => env('SOLR_HOST', 'solr'),
-                    'port' => env('SOLR_PORT', 8983),
-                    'path' => env('SOLR_PATH', '/'),
-                    'core' => env('SOLR_CORE', 'gettingstarted'),
-                ],
-            ],
+            'host' => env('SOLR_HOST', 'solr'),
+            'port' => env('SOLR_PORT', 8983),
+            'path' => env('SOLR_PATH', '/'),
+            // Core is set through searchableAs()
+        ],
+        // Example of a core defined through config
+        'books' => [
+            'host' => env('SOLR_HOST', 'solr2'),
+            'port' => env('SOLR_PORT', 8983),
+            'path' => env('SOLR_PATH', '/'),
+            'core' => env('SOLR_CORE', 'books'),
         ],
     ],
 ];

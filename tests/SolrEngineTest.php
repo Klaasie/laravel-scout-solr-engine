@@ -38,7 +38,7 @@ class SolrEngineTest extends TestCase
         $update->shouldReceive('addDocuments')->with([0 => $document]);
         $update->shouldReceive('addCommit');
 
-        $client->shouldReceive('update')->with($update);
+        $client->shouldReceive('update')->with($update, null);
 
         $engine = new SolrEngine($client, $this->app->make(Repository::class));
         $engine->update(Collection::make([$model]));
@@ -57,7 +57,7 @@ class SolrEngineTest extends TestCase
         $update->shouldReceive('addDocuments')->with([]);
         $update->shouldReceive('addCommit');
 
-        $client->shouldReceive('update')->with($update);
+        $client->shouldReceive('update')->with($update, null);
 
         $engine = new SolrEngine($client, $this->app->make(Repository::class));
         $engine->update(Collection::make([$model]));
@@ -81,7 +81,7 @@ class SolrEngineTest extends TestCase
         $update->shouldReceive('addDocuments')->with([0 => $document]);
         $update->shouldReceive('addCommit');
 
-        $client->shouldReceive('update')->with($update);
+        $client->shouldReceive('update')->with($update, null);
 
         $engine = new SolrEngine($client, $this->app->make(Repository::class));
         $engine->update(Collection::make([$model]));
@@ -99,7 +99,7 @@ class SolrEngineTest extends TestCase
         $delete->shouldReceive('addDeleteByIds')->with([1])->once();
         $delete->shouldReceive('addCommit');
 
-        $client->shouldReceive('update')->with($delete);
+        $client->shouldReceive('update')->with($delete, null);
 
         $engine = new SolrEngine($client, $this->app->make(Repository::class));
         $engine->delete(Collection::make([$model]));
@@ -117,7 +117,7 @@ class SolrEngineTest extends TestCase
         $delete->shouldReceive('addDeleteByIds')->with(['custom-key.1'])->once();
         $delete->shouldReceive('addCommit');
 
-        $client->shouldReceive('update')->with($delete);
+        $client->shouldReceive('update')->with($delete, null);
 
         $engine = new SolrEngine($client, $this->app->make(Repository::class));
         $engine->delete(Collection::make([$model]));
@@ -137,7 +137,7 @@ class SolrEngineTest extends TestCase
         $select->shouldReceive('setStart')->with(0)->andReturn(Mockery::self());
         $select->shouldReceive('setRows')->with(10)->andReturn(Mockery::self());
 
-        $client->shouldReceive('select')->with($select);
+        $client->shouldReceive('select')->with($select, null);
 
         $engine = new SolrEngine($client, $this->app->make(Repository::class));
         $engine->search($builder);
@@ -159,7 +159,7 @@ class SolrEngineTest extends TestCase
         $select->shouldReceive('setStart')->with(0)->andReturn(Mockery::self());
         $select->shouldReceive('setRows')->with(15)->andReturn(Mockery::self());
 
-        $client->shouldReceive('select')->with($select);
+        $client->shouldReceive('select')->with($select, null);
 
         $engine = new SolrEngine($client, $this->app->make(Repository::class));
         $engine->search($builder);
@@ -182,7 +182,7 @@ class SolrEngineTest extends TestCase
         $select->shouldReceive('setStart')->with(0)->andReturn(Mockery::self());
         $select->shouldReceive('setRows')->with(20)->andReturn(Mockery::self());
 
-        $client->shouldReceive('select')->with($select);
+        $client->shouldReceive('select')->with($select, null);
 
         $engine = new SolrEngine($client, $this->app->make(Repository::class));
         $engine->search($builder);
@@ -205,7 +205,7 @@ class SolrEngineTest extends TestCase
         $select->shouldReceive('setStart')->with(($page - 1) * $limit)->andReturn(Mockery::self());
         $select->shouldReceive('setRows')->with($limit)->andReturn(Mockery::self());
 
-        $client->shouldReceive('select')->with($select);
+        $client->shouldReceive('select')->with($select, null);
 
         $engine = new SolrEngine($client, $this->app->make(Repository::class));
         $engine->paginate($builder, $limit, $page);

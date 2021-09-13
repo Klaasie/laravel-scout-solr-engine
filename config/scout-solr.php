@@ -54,17 +54,24 @@ return [
     | Set the default Solr instance for the client to work with.
     | A core is not necessary here, the client will set the right core based on the model searchableAs() value.
     |
+    | If a model is stored on a different instance of Solr additional configs can be provided here.
+    | It is important that the key of the configuration is equal to the models searchableAs()
+    |
     |
     */
     'endpoints' => [
         'default' => [
-            'endpoint' => [
-                'localhost' => [
-                    'host' => env('SOLR_HOST', 'localhost'),
-                    'port' => env('SOLR_PORT', 8983),
-                    'path' => env('SOLR_PATH', '/'),
-                ],
-            ],
+            'host' => env('SOLR_HOST', 'localhost'),
+            'port' => env('SOLR_PORT', 8983),
+            'path' => env('SOLR_PATH', '/'),
+            // Core is set through searchableAs()
         ],
+        // Example of a core defined through config
+//        'books' => [
+//            'host' => env('SOLR_HOST', 'solr2'),
+//            'port' => env('SOLR_PORT', 8983),
+//            'path' => env('SOLR_PATH', '/'),
+//            'core' => env('SOLR_CORE', 'books'),
+//        ],
     ],
 ];

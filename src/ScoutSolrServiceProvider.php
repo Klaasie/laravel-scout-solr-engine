@@ -10,6 +10,7 @@ use Illuminate\Support\ServiceProvider;
 use Laravel\Scout\EngineManager;
 use Scout\Solr\Engines\SolrEngine;
 use Solarium\Core\Client\Adapter\Curl;
+use Solarium\Core\Client\Endpoint;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class ScoutSolrServiceProvider extends ServiceProvider
@@ -19,11 +20,14 @@ class ScoutSolrServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/scout-solr.php', 'scout-solr');
 
         $this->app->bind(ClientInterface::class, static function (Application $app) {
-            return new Client(
+            $client = new Client(
                 new Curl(),
                 new EventDispatcher(),
-                $app['config']->get('scout-solr.endpoints.default')
+                null,
             );
+
+            $client->getEndpoint('localhost')->setOptions($app['config']->get('scout-solr.endpoints.default'));
+            return $client;
         });
     }
 

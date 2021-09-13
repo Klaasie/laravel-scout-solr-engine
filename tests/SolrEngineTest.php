@@ -14,6 +14,7 @@ use Scout\Solr\Engines\SolrEngine;
 use Scout\Solr\Tests\Fixtures\EmptySearchableModel;
 use Scout\Solr\Tests\Fixtures\SearchableModel;
 use Scout\Solr\Tests\Fixtures\SearchableModelWithCustomKey;
+use Solarium\Core\Client\Endpoint;
 use Solarium\Core\Client\Response;
 use Solarium\QueryType\Select\Query\Query as SelectQuery;
 use Solarium\QueryType\Select\Result\Result;
@@ -87,6 +88,37 @@ class SolrEngineTest extends TestCase
         $engine->update(Collection::make([$model]));
     }
 
+    public function test_a_model_is_updated_to_other_endpoint(): void
+    {
+        $instance = [
+            'host' => 'solr2',
+            'port' => 8983,
+            'path' => '/',
+            'core' => 'table',
+        ];
+
+        Config::set('scout-solr.endpoints.table', $instance);
+
+        $model = new SearchableModel(['id' => 1]);
+
+        $client = Mockery::mock(Client::class);
+        $client->shouldReceive('setCore')->with($model);
+        $client->shouldReceive('createUpdate')
+            ->andReturn($update = Mockery::mock(UpdateQuery::class));
+
+        $update->shouldReceive('createDocument')->once()->andReturn(
+            $document = new Document(['id' => 1])
+        );
+
+        $update->shouldReceive('addDocuments')->with([0 => $document]);
+        $update->shouldReceive('addCommit');
+
+        $client->shouldReceive('update')->with($update, Mockery::type(Endpoint::class));
+
+        $engine = new SolrEngine($client, $this->app->make(Repository::class));
+        $engine->update(Collection::make([$model]));
+    }
+
     public function test_delete_document_from_core(): void
     {
         $model = new SearchableModel(['id' => 1]);
@@ -123,6 +155,33 @@ class SolrEngineTest extends TestCase
         $engine->delete(Collection::make([$model]));
     }
 
+    public function test_a_model_is_deleted_to_other_endpoint(): void
+    {
+        $instance = [
+            'host' => 'solr2',
+            'port' => 8983,
+            'path' => '/',
+            'core' => 'table',
+        ];
+
+        Config::set('scout-solr.endpoints.table', $instance);
+
+        $model = new SearchableModel(['id' => 1]);
+
+        $client = Mockery::mock(Client::class);
+        $client->shouldReceive('setCore')->with($model);
+        $client->shouldReceive('createUpdate')
+            ->andReturn($delete = Mockery::mock(UpdateQuery::class));
+
+        $delete->shouldReceive('addDeleteByIds')->with([1])->once();
+        $delete->shouldReceive('addCommit');
+
+        $client->shouldReceive('update')->with($delete, Mockery::type(Endpoint::class));
+
+        $engine = new SolrEngine($client, $this->app->make(Repository::class));
+        $engine->delete(Collection::make([$model]));
+    }
+
     public function test_search_sends_correct_parameters_to_solr(): void
     {
         Config::set('scout-solr.select.limit', 10);
@@ -138,6 +197,34 @@ class SolrEngineTest extends TestCase
         $select->shouldReceive('setRows')->with(10)->andReturn(Mockery::self());
 
         $client->shouldReceive('select')->with($select, null);
+
+        $engine = new SolrEngine($client, $this->app->make(Repository::class));
+        $engine->search($builder);
+    }
+
+    public function test_search_sends_correct_parameters_to_other_solr_endpoint(): void
+    {
+        $instance = [
+            'host' => 'solr2',
+            'port' => 8983,
+            'path' => '/',
+            'core' => 'table',
+        ];
+
+        Config::set('scout-solr.endpoints.table', $instance);
+        Config::set('scout-solr.select.limit', 10);
+        $builder = new Builder(new SearchableModel(), '*:*');
+
+        $client = Mockery::mock(Client::class);
+        $client->shouldReceive('setCore')->with($builder->model);
+        $client->shouldReceive('createSelect')
+            ->andReturn($select = Mockery::mock(SelectQuery::class));
+
+        $select->shouldReceive('setQuery')->with('*:*')->andReturn(Mockery::self());
+        $select->shouldReceive('setStart')->with(0)->andReturn(Mockery::self());
+        $select->shouldReceive('setRows')->with(10)->andReturn(Mockery::self());
+
+        $client->shouldReceive('select')->with($select, Mockery::type(Endpoint::class));
 
         $engine = new SolrEngine($client, $this->app->make(Repository::class));
         $engine->search($builder);

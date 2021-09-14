@@ -54,7 +54,7 @@ class SolrEngine extends Engine
         $update->addDocuments($documents);
         $update->addCommit();
 
-        return $this->client->update($update, $this->getEndpoint($models->first()->searchableAs()));
+        return $this->client->update($update, $this->getEndpointFromConfig($models->first()->searchableAs()));
     }
 
     public function delete($models): void
@@ -69,7 +69,7 @@ class SolrEngine extends Engine
         );
         $delete->addCommit();
 
-        $this->client->update($delete, $this->getEndpoint($models->first()->searchableAs()));
+        $this->client->update($delete, $this->getEndpointFromConfig($models->first()->searchableAs()));
     }
 
     public function search(Builder $builder): Result
@@ -162,7 +162,7 @@ class SolrEngine extends Engine
         $query->addDeleteQuery('*:*');
         $query->addCommit();
 
-        $this->client->update($query, $this->getEndpoint($model->searchableAs()));
+        $this->client->update($query, $this->getEndpointFromConfig($model->searchableAs()));
     }
 
     public function createIndex($name, array $options = [])
@@ -174,7 +174,7 @@ class SolrEngine extends Engine
         $action->setConfigSet($this->config->get('scout-solr.create.config_set'));
 
         $coreAdminQuery->setAction($action);
-        return $this->client->coreAdmin($coreAdminQuery, $this->getEndpoint($name));
+        return $this->client->coreAdmin($coreAdminQuery, $this->getEndpointFromConfig($name));
     }
 
     public function deleteIndex($name)
@@ -188,7 +188,7 @@ class SolrEngine extends Engine
         $action->setDeleteInstanceDir($this->config->get('scout-solr.unload.delete_instance_dir'));
 
         $coreAdminQuery->setAction($action);
-        return $this->client->coreAdmin($coreAdminQuery, $this->getEndpoint($name));
+        return $this->client->coreAdmin($coreAdminQuery, $this->getEndpointFromConfig($name));
     }
 
     protected function performSearch(Builder $builder, array $options = []): Result
@@ -214,7 +214,7 @@ class SolrEngine extends Engine
         $query->setStart($options['offset'] ?? 0)
             ->setRows($options['limit'] ?? $this->config->get('scout-solr.select.limit'));
 
-        return $this->client->select($query, $this->getEndpoint($builder->model->searchableAs()));
+        return $this->client->select($query, $this->getEndpointFromConfig($builder->model->searchableAs()));
     }
 
     protected function filters(Builder $builder): string
@@ -232,7 +232,7 @@ class SolrEngine extends Engine
         return $filters->values()->implode(' AND ');
     }
 
-    protected function getEndpoint(string $name): ?Endpoint
+    public function getEndpointFromConfig(string $name): ?Endpoint
     {
         if ($this->config->get('scout-solr.endpoints.' . $name) === null) {
             return null;

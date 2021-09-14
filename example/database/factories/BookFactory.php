@@ -18,8 +18,8 @@ class BookFactory extends Factory
     public function definition(): array
     {
         return [
-            'title' => $this->faker->name(),
-            'author' => $this->faker->unique()->safeEmail(),
+            'title' => $this->faker->sentence(random_int(2, 8), true),
+            'author' => $this->faker->name(),
             'publication_date' => Carbon::today()
                 ->subYears(random_int(0, 25))
                 ->subMonths(random_int(0, 12))

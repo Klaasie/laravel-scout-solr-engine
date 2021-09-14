@@ -11,7 +11,8 @@
         <link href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Two+Tone|Material+Icons+Round|Material+Icons+Sharp" rel="stylesheet">
     </head>
     <body class="min-w-screen bg-gray-100">
-        @include('partials.form')
-        @include('partials.table')
+        @include('partials.menu')
+        @include('partials.books.form')
+        @include('partials.books.table')
     </body>
 </html>

@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\UserFilterPostRequest;
 use App\Models\User;
-use Illuminate\View\View;
+use Illuminate\Contracts\View\View;
 
 class UserController extends Controller
 {
@@ -24,10 +24,11 @@ class UserController extends Controller
             $query = User::search('*:*');
         }
 
-        return view('welcome', [
+        return view('users', [
             'users' => $query->paginate(10)->appends($request->query())->onEachSide(1),
             'name' => $request->getName(),
-            'email' => $request->getEmail()
+            'email' => $request->getEmail(),
+            'menu' => 'users',
         ]);
     }
 }

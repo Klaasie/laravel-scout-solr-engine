@@ -22,6 +22,11 @@ class Book extends Model
         'publication_date' => 'datetime',
     ];
 
+    public function getId(): int
+    {
+        return $this->getAttribute('id');
+    }
+
     public function getTitle(): string
     {
         return $this->getAttribute('title');

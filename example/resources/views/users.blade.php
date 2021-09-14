@@ -12,7 +12,9 @@
     </head>
     <body class="min-w-screen bg-gray-100">
         @include('partials.menu')
-        @include('partials.users.form')
-        @include('partials.users.table')
+        <div class="container mx-auto">
+            @include('partials.users.form')
+            @include('partials.users.table')
+        </div>
     </body>
 </html>

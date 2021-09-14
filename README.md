@@ -40,13 +40,13 @@ Visit [https://solarium.readthedocs.io/en/stable/](https://solarium.readthedocs.
 For convenience, any unknown methods used on the engine will be forwarded to the solarium client.
 
 ```php
-        $model = new \App\Models\SearchableModel();
+$model = new \App\Models\SearchableModel();
 
-        /** @var \Scout\Solr\Engines\SolrEngine $engine */
-        $engine = app(\Laravel\Scout\EngineManager::class)->engine();
-        $select = $engine->setCore($model)->createSelect();
-        $select->setQuery('*:*');
-        $result = $engine->select($select, $engine->getEndpointFromConfig($model->searchableAs())); // getEndpointFromConfig() is only necessary when your model does not use the default solr instance.
+/** @var \Scout\Solr\Engines\SolrEngine $engine */
+$engine = app(\Laravel\Scout\EngineManager::class)->engine();
+$select = $engine->setCore($model)->createSelect();
+$select->setQuery('*:*');
+$result = $engine->select($select, $engine->getEndpointFromConfig($model->searchableAs())); // getEndpointFromConfig() is only necessary when your model does not use the default solr instance.
 ```
 
 ## Example

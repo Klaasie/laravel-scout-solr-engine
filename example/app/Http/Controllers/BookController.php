@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\BookFilterPostRequest;
-use App\Http\Requests\UserFilterPostRequest;
 use App\Models\Book;
 use Illuminate\Contracts\View\View;
 

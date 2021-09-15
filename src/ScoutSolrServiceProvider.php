@@ -19,7 +19,7 @@ class ScoutSolrServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__.'/../config/scout-solr.php', 'scout-solr');
 
-        $this->app->bind(ClientInterface::class, static function (Application $app) {
+        $this->app->singleton(ClientInterface::class, static function (Application $app) {
             $client = new Client(
                 new Curl(),
                 new EventDispatcher(),

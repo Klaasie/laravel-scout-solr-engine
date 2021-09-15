@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace Scout\Solr\Engines;
 
 use Illuminate\Contracts\Config\Repository;
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection as SupportCollection;
@@ -16,6 +17,8 @@ use Laravel\Scout\Builder;
 use Laravel\Scout\Engines\Engine;
 use Scout\Solr\Client;
 use Scout\Solr\ClientInterface;
+use Scout\Solr\Events\AfterSelect;
+use Scout\Solr\Events\BeforeSelect;
 use Solarium\Core\Client\Endpoint;
 use Solarium\Core\Query\Result\ResultInterface;
 use Solarium\QueryType\Select\Result\Document;
@@ -28,11 +31,13 @@ class SolrEngine extends Engine
 {
     private ClientInterface $client;
     private Repository $config;
+    private Dispatcher $events;
 
-    public function __construct(ClientInterface $client, Repository $config)
+    public function __construct(ClientInterface $client, Repository $config, Dispatcher $events)
     {
         $this->client = $client;
         $this->config = $config;
+        $this->events = $events;
     }
 
     public function update($models): ResultInterface
@@ -218,7 +223,13 @@ class SolrEngine extends Engine
         $query->setStart($options['offset'] ?? 0)
             ->setRows($options['limit'] ?? $this->config->get('scout-solr.select.limit'));
 
-        return $this->client->select($query, $this->getEndpointFromConfig($builder->model->searchableAs()));
+        $this->events->dispatch(new BeforeSelect($query));
+
+        $result = $this->client->select($query, $this->getEndpointFromConfig($builder->model->searchableAs()));
+
+        $this->events->dispatch(new AfterSelect($result));
+
+        return $result;
     }
 
     protected function filters(Builder $builder): string

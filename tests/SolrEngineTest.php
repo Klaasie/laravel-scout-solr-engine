@@ -3,6 +3,7 @@
 namespace Scout\Solr\Tests;
 
 use Illuminate\Contracts\Config\Repository;
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Config;
 use JsonException;
@@ -41,7 +42,7 @@ class SolrEngineTest extends TestCase
 
         $client->shouldReceive('update')->with($update, null);
 
-        $engine = new SolrEngine($client, $this->app->make(Repository::class));
+        $engine = $this->create_engine($client);
         $engine->update(Collection::make([$model]));
     }
 
@@ -60,7 +61,7 @@ class SolrEngineTest extends TestCase
 
         $client->shouldReceive('update')->with($update, null);
 
-        $engine = new SolrEngine($client, $this->app->make(Repository::class));
+        $engine = $this->create_engine($client);
         $engine->update(Collection::make([$model]));
     }
 
@@ -84,7 +85,7 @@ class SolrEngineTest extends TestCase
 
         $client->shouldReceive('update')->with($update, null);
 
-        $engine = new SolrEngine($client, $this->app->make(Repository::class));
+        $engine = $this->create_engine($client);
         $engine->update(Collection::make([$model]));
     }
 
@@ -115,7 +116,7 @@ class SolrEngineTest extends TestCase
 
         $client->shouldReceive('update')->with($update, Mockery::type(Endpoint::class));
 
-        $engine = new SolrEngine($client, $this->app->make(Repository::class));
+        $engine = $this->create_engine($client);
         $engine->update(Collection::make([$model]));
     }
 
@@ -133,7 +134,7 @@ class SolrEngineTest extends TestCase
 
         $client->shouldReceive('update')->with($delete, null);
 
-        $engine = new SolrEngine($client, $this->app->make(Repository::class));
+        $engine = $this->create_engine($client);
         $engine->delete(Collection::make([$model]));
     }
 
@@ -151,7 +152,7 @@ class SolrEngineTest extends TestCase
 
         $client->shouldReceive('update')->with($delete, null);
 
-        $engine = new SolrEngine($client, $this->app->make(Repository::class));
+        $engine = $this->create_engine($client);
         $engine->delete(Collection::make([$model]));
     }
 
@@ -178,7 +179,7 @@ class SolrEngineTest extends TestCase
 
         $client->shouldReceive('update')->with($delete, Mockery::type(Endpoint::class));
 
-        $engine = new SolrEngine($client, $this->app->make(Repository::class));
+        $engine = $this->create_engine($client);
         $engine->delete(Collection::make([$model]));
     }
 
@@ -198,7 +199,7 @@ class SolrEngineTest extends TestCase
 
         $client->shouldReceive('select')->with($select, null);
 
-        $engine = new SolrEngine($client, $this->app->make(Repository::class));
+        $engine = $this->create_engine($client);
         $engine->search($builder);
     }
 
@@ -226,7 +227,7 @@ class SolrEngineTest extends TestCase
 
         $client->shouldReceive('select')->with($select, Mockery::type(Endpoint::class));
 
-        $engine = new SolrEngine($client, $this->app->make(Repository::class));
+        $engine = $this->create_engine($client);
         $engine->search($builder);
     }
 
@@ -248,7 +249,7 @@ class SolrEngineTest extends TestCase
 
         $client->shouldReceive('select')->with($select, null);
 
-        $engine = new SolrEngine($client, $this->app->make(Repository::class));
+        $engine = $this->create_engine($client);
         $engine->search($builder);
     }
 
@@ -271,7 +272,7 @@ class SolrEngineTest extends TestCase
 
         $client->shouldReceive('select')->with($select, null);
 
-        $engine = new SolrEngine($client, $this->app->make(Repository::class));
+        $engine = $this->create_engine($client);
         $engine->search($builder);
     }
 
@@ -294,7 +295,7 @@ class SolrEngineTest extends TestCase
 
         $client->shouldReceive('select')->with($select, null);
 
-        $engine = new SolrEngine($client, $this->app->make(Repository::class));
+        $engine = $this->create_engine($client);
         $engine->paginate($builder, $limit, $page);
     }
 
@@ -303,7 +304,7 @@ class SolrEngineTest extends TestCase
         $client = Mockery::mock(Client::class);
         $client->shouldReceive('mapIds')->with([]);
 
-        $engine = new SolrEngine($client, $this->app->make(Repository::class));
+        $engine = $this->create_engine($client);
         $results = $engine->mapIds([]);
 
         $this->assertCount(0, $results);
@@ -325,7 +326,7 @@ class SolrEngineTest extends TestCase
         $doc1->shouldReceive('getFields')->once()->andReturn(['id' => 1]);
         $doc2->shouldReceive('getFields')->once()->andReturn(['id' => 2]);
 
-        $engine = new SolrEngine($client, $this->app->make(Repository::class));
+        $engine = $this->create_engine($client);
         $results = $engine->mapIds($docs);
 
         $this->assertCount(2, $results);
@@ -366,7 +367,7 @@ class SolrEngineTest extends TestCase
             ]));
         $builder = Mockery::mock(Builder::class);
 
-        $engine = new SolrEngine($client, $this->app->make(Repository::class));
+        $engine = $this->create_engine($client);
         $results = $engine->map($builder, $result, $model);
 
         $this->assertCount(2, $results);
@@ -404,7 +405,7 @@ class SolrEngineTest extends TestCase
             ]));
         $builder = Mockery::mock(Builder::class);
 
-        $engine = new SolrEngine($client, $this->app->make(Repository::class));
+        $engine = $this->create_engine($client);
         $results = $engine->lazyMap($builder, $result, $model);
 
         $this->assertCount(1, $results);
@@ -431,7 +432,7 @@ class SolrEngineTest extends TestCase
 
         $client = Mockery::mock(Client::class);
 
-        $engine = new SolrEngine($client, $this->app->make(Repository::class));
+        $engine = $this->create_engine($client);
         $count = $engine->getTotalCount($result);
 
         $this->assertEquals(12, $count);
@@ -442,8 +443,17 @@ class SolrEngineTest extends TestCase
         $client = Mockery::mock(Client::class);
         $client->shouldReceive('testMethodOnClient')->once();
 
-        $engine = new SolrEngine($client, $this->app->make(Repository::class));
+        $engine = $this->create_engine($client);
         $engine->testMethodOnClient();
+    }
+
+    protected function create_engine(Client $client): SolrEngine
+    {
+        return new SolrEngine(
+            $client,
+            $this->app->make(Repository::class),
+            $this->app->make(Dispatcher::class)
+        );
     }
 
     /**

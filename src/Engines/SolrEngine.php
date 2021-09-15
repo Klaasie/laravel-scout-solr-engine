@@ -211,6 +211,10 @@ class SolrEngine extends Engine
             $query->setQuery($builder->query);
         }
 
+        foreach ($builder->orders as $order) {
+            $query->addSort($order['column'], $order['direction']);
+        }
+
         $query->setStart($options['offset'] ?? 0)
             ->setRows($options['limit'] ?? $this->config->get('scout-solr.select.limit'));
 

@@ -21,12 +21,18 @@ class BookController extends Controller
             if ($email = $request->getAuthor()) {
                 $query->where('author', $email);
             }
+
+            if ($summary = $request->getSummary()) {
+                $query->where('summary', $summary);
+            }
         } else {
             $query = Book::search('*:*');
         }
 
+        $query->orderBy('title_str');
+
         return view('books', [
-            'books' => $query->paginate(10)->appends($request->query())->onEachSide(1),
+            'books' => $query->paginate(12)->appends($request->query())->onEachSide(1),
             'title' => $request->getTitle(),
             'author' => $request->getAuthor(),
             'publication_date_from' => $request->getPublicationDateFrom(),

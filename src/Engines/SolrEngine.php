@@ -223,11 +223,11 @@ class SolrEngine extends Engine
         $query->setStart($options['offset'] ?? 0)
             ->setRows($options['limit'] ?? $this->config->get('scout-solr.select.limit'));
 
-        $this->events->dispatch(new BeforeSelect($query));
+        $this->events->dispatch(new BeforeSelect($query, $builder));
 
         $result = $this->client->select($query, $this->getEndpointFromConfig($builder->model->searchableAs()));
 
-        $this->events->dispatch(new AfterSelect($result));
+        $this->events->dispatch(new AfterSelect($result, $builder->model));
 
         return $result;
     }

@@ -49,6 +49,15 @@ $select->setQuery('*:*');
 $result = $engine->select($select, $engine->getEndpointFromConfig($model->searchableAs())); // getEndpointFromConfig() is only necessary when your model does not use the default solr instance.
 ```
 
+## Events
+The Solr Engine dispatches several events allowing you to hook into specific points in the engine.
+
+| Event | Usage |
+|---------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+|Scout\Solr\Events\BeforeSelect|Contains the Solr `Solarium\QueryType\Select\Query\Query` object and Scout `Builder` object. This event allows you to create complex queries using the Solarium package.|
+|Scout\Solr\Events\BeforeSelect|Contains the Solr `Solarium\QueryType\Select\Result\Result` object and `Model` object. This event allows you to create complex queries using the Solarium package.|
+
+
 ## Example
 
 This repository provides an example laravel app showcasing the functionality of this package.   

@@ -15,7 +15,7 @@ __Migrate database__
 vendor/bin/sail artisan migrate
 ```
 
-__Run the user seeder___
+__Run the user seeder__
 ```
 vendor/bin/sail artisan db:seed --class=DatabaseSeeder   
 ```

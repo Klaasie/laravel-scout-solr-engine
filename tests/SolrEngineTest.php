@@ -299,6 +299,30 @@ class SolrEngineTest extends TestCase
         $engine->paginate($builder, $limit, $page);
     }
 
+    public function test_search_sends_correct_order_by_parameters_to_solr(): void
+    {
+        Config::set('scout-solr.select.limit', 10);
+
+        $builder = SearchableModel::search('*:*');
+        $builder->orderBy('foo', 'desc');
+
+        $client = Mockery::mock(Client::class);
+        $client->shouldReceive('setCore')->with($builder->model);
+        $client->shouldReceive('createSelect')
+            ->andReturn($select = Mockery::mock(SelectQuery::class));
+
+        $select->shouldReceive('setQuery')->with('*:*')
+            ->andReturn(Mockery::self());
+        $select->shouldReceive('addSort')->with('foo', 'desc')->andReturn(Mockery::self());
+        $select->shouldReceive('setStart')->with(0)->andReturn(Mockery::self());
+        $select->shouldReceive('setRows')->with(10)->andReturn(Mockery::self());
+
+        $client->shouldReceive('select')->with($select, null);
+
+        $engine = $this->create_engine($client);
+        $engine->search($builder);
+    }
+
     public function test_map_ids_returns_empty_collection_if_no_results(): void
     {
         $client = Mockery::mock(Client::class);

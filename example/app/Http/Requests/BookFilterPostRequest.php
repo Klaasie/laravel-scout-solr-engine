@@ -21,14 +21,9 @@ class BookFilterPostRequest extends FormRequest
         return $this->get('author');
     }
 
-    public function getPublicationDateFrom(): ?string
+    public function getPublicationDate(): ?string
     {
-        return $this->get('publication_date_from');
-    }
-
-    public function getPublicationDateTo(): ?string
-    {
-        return $this->get('publication_date_to');
+        return $this->get('publication_date');
     }
 
     public function getSummary(): ?string

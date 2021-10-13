@@ -36,7 +36,3 @@
         </div>
     </div>
 </div>
-
-<div class="text-center mb-4">
-    <span class="italic"><span class="font-medium">{{ $queryTime }}</span> ms query time</span>
-</div>

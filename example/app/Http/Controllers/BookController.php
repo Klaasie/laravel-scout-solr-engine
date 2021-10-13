@@ -20,7 +20,7 @@ class BookController extends Controller
         $this->dispatcher = $dispatcher;
     }
 
-    public function __invoke(BookFilterPostRequest $request): View
+    public function index(BookFilterPostRequest $request): View
     {
         if ($request->hasAny(['title', 'author', 'publication_date', 'summary'])) {
             $query = Book::search('');
@@ -73,5 +73,35 @@ class BookController extends Controller
             'summary' => $request->getSummary(),
             'menu' => 'books',
         ]);
+    }
+
+    public function create()
+    {
+        // ..
+    }
+
+    public function store()
+    {
+        // ..
+    }
+
+    public function show()
+    {
+        // ..
+    }
+
+    public function edit()
+    {
+        // ..
+    }
+
+    public function update()
+    {
+        // ..
+    }
+
+    public function destroy()
+    {
+        // ..
     }
 }

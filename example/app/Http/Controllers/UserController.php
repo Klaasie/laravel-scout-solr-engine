@@ -6,17 +6,11 @@ use App\Http\Requests\UserFilterPostRequest;
 use App\Models\User;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
+use Illuminate\Routing\Redirector;
 
 class UserController extends Controller
 {
-    private Factory $view;
-
-    public function __construct(Factory $view)
-    {
-        $this->view = $view;
-    }
-
-    public function __invoke(UserFilterPostRequest $request): View
+    public function index(UserFilterPostRequest $request, Factory $view): View
     {
         if ($request->hasAny(['name', 'email'])) {
             $query = User::search('');
@@ -32,11 +26,44 @@ class UserController extends Controller
             $query = User::search('*:*');
         }
 
-        return $this->view->make('users', [
+        return $view->make('users', [
             'users' => $query->paginate(10)->appends($request->query())->onEachSide(1),
             'name' => $request->getName(),
             'email' => $request->getEmail(),
             'menu' => 'users',
         ]);
+    }
+
+    public function create()
+    {
+        // ..
+    }
+
+    public function store()
+    {
+        // ..
+    }
+
+    public function show()
+    {
+        // ..
+    }
+
+    public function edit()
+    {
+        // ..
+    }
+
+    public function update()
+    {
+        // ..
+    }
+
+    public function destroy(int $id, Redirector $redirector)
+    {
+        $user = User::query()->findOrFail($id);
+        $user->delete();
+
+        return $redirector->route('users.index')->with('success', 'User deleted');
     }
 }

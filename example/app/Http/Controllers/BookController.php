@@ -65,13 +65,16 @@ class BookController extends Controller
 
         $query->orderBy('title_str');
 
-        return $this->view->make('books', [
+        $this->view->composer('components.menu', static function (View $view) {
+            $view->with('menu', 'books');
+        });
+
+        return $this->view->make('books.index', [
             'books' => $query->paginate(12)->appends($request->query())->onEachSide(1),
             'title' => $request->getTitle(),
             'author' => $request->getAuthor(),
             'publicationDate' => $request->getPublicationDate(),
             'summary' => $request->getSummary(),
-            'menu' => 'books',
         ]);
     }
 

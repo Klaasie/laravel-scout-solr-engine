@@ -8,8 +8,6 @@
         </div>
     </div>
 
-
-
     <div class="flex flex-col w-full">
         <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
             <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
@@ -38,36 +36,38 @@
                         </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
-                        @foreach($users as $user)
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ $user->getId() }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900">{{ $user->getName() }}</div>
-                                    <div class="text-sm text-gray-500">{{ $user->getEmail() }}</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ optional($user->getEmailVerifiedAt())->format('Y-m-d H:i:s') }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ optional($user->getCreatedAt())->format('Y-m-d H:i:s') }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ optional($user->getUpdatedAt())->format('Y-m-d H:i:s') }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <a href="{{ route('users.edit', $user->getId()) }}" class="text-gray-400 hover:text-blue-500 mx-2">
-                                        <i class="material-icons-outlined text-base md-18">edit</i>
-                                    </a>
-                                    <form action="{{ route('users.destroy', $user->getId()) }}" method="POST" class="inline text-gray-400 hover:text-blue-500 mx-2 cursor-pointer">
-                                        @method('DELETE')
-                                        @csrf
-                                        <button type="submit" class="material-icons-round text-base md-18">delete_outline</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @endforeach
+
+                            @foreach($users as $user)
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ $user->getId() }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">{{ $user->getName() }}</div>
+                                        <div class="text-sm text-gray-500">{{ $user->getEmail() }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ optional($user->getEmailVerifiedAt())->format('Y-m-d H:i:s') }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ optional($user->getCreatedAt())->format('Y-m-d H:i:s') }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ optional($user->getUpdatedAt())->format('Y-m-d H:i:s') }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <a href="{{ route('users.edit', $user->getId()) }}" class="text-gray-400 hover:text-blue-500 mx-2">
+                                            <i class="material-icons-outlined text-base md-18">edit</i>
+                                        </a>
+                                        <form action="{{ route('users.destroy', $user->getId()) }}" method="POST" class="inline text-gray-400 hover:text-blue-500 mx-2 cursor-pointer">
+                                            @method('DELETE')
+                                            @csrf
+                                            <button type="submit" class="material-icons-round text-base md-18">delete_outline</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @endforeach
+
                         </tbody>
                     </table>
                     <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">

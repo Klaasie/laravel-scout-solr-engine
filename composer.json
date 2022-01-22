@@ -18,7 +18,6 @@
             "email": "poortinga.k@gmail.com"
         }
     ],
-    "minimum-stability": "stable",
     "require": {
         "php": "^8.0|^9.0",
         "ext-json": "*",
@@ -43,5 +42,7 @@
                 "Scout\\Solr\\ScoutSolrServiceProvider"
             ]
         }
-    }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }

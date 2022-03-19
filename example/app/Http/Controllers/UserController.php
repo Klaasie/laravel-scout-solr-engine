@@ -3,13 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UserFilterPostRequest;
+use App\Http\Requests\UserUpdate;
 use App\Models\User;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Redirector;
 
 class UserController extends Controller
 {
+    public const MENU = 'users';
+
     private Factory $view;
 
     public function __construct(Factory $view)
@@ -19,7 +23,7 @@ class UserController extends Controller
 
     public function index(UserFilterPostRequest $request): View
     {
-        if ($request->hasAny(['name', 'email'])) {
+        if ($request->anyFilled(['name', 'email'])) {
             $query = User::search('');
 
             if ($name = $request->getName()) {
@@ -34,11 +38,13 @@ class UserController extends Controller
         }
 
         $this->view->composer('components.menu', static function (View $view) {
-            $view->with('menu', 'users');
+            $view->with('menu', self::MENU);
         });
 
         return $this->view->make('users.index', [
-            'users' => $query->paginate(10)->appends($request->query())->onEachSide(1),
+            'users' => $query->paginate(10)
+                ->appends($request->query())
+                ->onEachSide(1),
             'name' => $request->getName(),
             'email' => $request->getEmail(),
         ]);
@@ -61,26 +67,36 @@ class UserController extends Controller
 
     public function edit(string $id): View
     {
-        $user = User::query()->find($id);
+        $user = User::query()
+            ->find($id);
 
         abort_if($user === null, 404);
 
-        return $this->view->make('users', [
+        $this->view->composer('components.menu', static function (View $view) {
+            $view->with('menu', self::MENU);
+        });
+
+        return $this->view->make('users.update', [
             'user' => $user,
-            'menu' => 'users',
         ]);
     }
 
-    public function update()
+    public function update(int $id, UserUpdate $request, Redirector $redirector): RedirectResponse
     {
-        // ..
+        User::query()->where('id', '=', $id)
+            ->update($request->only(['name', 'email']));
+
+        return $redirector->route('users.index')
+            ->with('success', 'User updated');
     }
 
-    public function destroy(int $id, Redirector $redirector)
+    public function destroy(int $id, Redirector $redirector): RedirectResponse
     {
-        $user = User::query()->findOrFail($id);
+        $user = User::query()
+            ->findOrFail($id);
         $user->delete();
 
-        return $redirector->route('users.index')->with('success', 'User deleted');
+        return $redirector->route('users.index')
+            ->with('success', 'User deleted');
     }
 }

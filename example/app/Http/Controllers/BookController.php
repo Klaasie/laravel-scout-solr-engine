@@ -11,6 +11,8 @@ use Scout\Solr\Events\BeforeSelect;
 
 class BookController extends Controller
 {
+    public const MENU = 'books';
+
     private Factory $view;
     private Dispatcher $dispatcher;
 
@@ -22,7 +24,7 @@ class BookController extends Controller
 
     public function index(BookFilterPostRequest $request): View
     {
-        if ($request->hasAny(['title', 'author', 'publication_date', 'summary'])) {
+        if ($request->anyFilled(['title', 'author', 'publication_date', 'summary'])) {
             $query = Book::search('');
 
             if ($name = $request->getTitle()) {
@@ -66,7 +68,7 @@ class BookController extends Controller
         $query->orderBy('title_str');
 
         $this->view->composer('components.menu', static function (View $view) {
-            $view->with('menu', 'books');
+            $view->with('menu', self::MENU);
         });
 
         return $this->view->make('books.index', [

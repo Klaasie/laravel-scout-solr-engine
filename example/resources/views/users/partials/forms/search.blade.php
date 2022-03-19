@@ -10,10 +10,8 @@
                 <div class="divide-y divide-gray-200">
                     <form action="{{ Request::path() }}">
                         <x-forms.container>
-                            <x-forms.input.text label="Title" name="title" :value="$title" />
-                            <x-forms.input.text label="Author" name="author" :value="$author" />
-                            <x-forms.input.text label="Summary" name="summary" :value="$summary" />
-                            <x-forms.input.text label="Publication date" name="publication_date" :value="$publicationDate" />
+                            <x-forms.input.text label="Name" name="name" :value="$name" />
+                            <x-forms.input.text label="Email" name="email" :value="$email" />
                         </x-forms.container>
                         <x-button.block text="Search"/>
                     </form>
@@ -22,8 +20,4 @@
             </div>
         </div>
     </div>
-</div>
-
-<div class="text-center mb-4">
-    <span class="italic"><span class="font-medium">{{ $queryTime }}</span> ms query time</span>
 </div>

@@ -13,11 +13,19 @@ class UserFilterPostRequest extends FormRequest
 
     public function getName(): ?string
     {
+        if($this->isEmptyString('name')) {
+            return null;
+        }
+
         return $this->get('name');
     }
 
     public function getEmail(): ?string
     {
+        if($this->isEmptyString('email')) {
+            return null;
+        }
+
         return $this->get('email');
     }
 

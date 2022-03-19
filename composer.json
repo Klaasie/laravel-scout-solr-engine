@@ -19,7 +19,7 @@
         }
     ],
     "require": {
-        "php": "^8.0|^9.0",
+        "php": "^7.4|^8.0",
         "ext-json": "*",
         "laravel/scout": "^9.2",
         "solarium/solarium": "^6.1"

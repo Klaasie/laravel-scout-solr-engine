@@ -29,6 +29,7 @@ class UserFilterPostRequest extends FormRequest
         return $this->get('email');
     }
 
+    /** @return array<string, string> */
     public function rules(): array
     {
         return [];

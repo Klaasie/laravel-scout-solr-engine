@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\BookFilterPostRequest;
 use App\Models\Book;
+use App\Traits\HasMenu;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -11,6 +12,8 @@ use Scout\Solr\Events\BeforeSelect;
 
 class BookController extends Controller
 {
+    use HasMenu;
+
     public const MENU = 'books';
 
     private Factory $view;
@@ -67,9 +70,7 @@ class BookController extends Controller
 
         $query->orderBy('title_str');
 
-        $this->view->composer('components.menu', static function (View $view) {
-            $view->with('menu', self::MENU);
-        });
+        $this->setMenu(self::MENU);
 
         return $this->view->make('books.index', [
             'books' => $query->paginate(12)->appends($request->query())->onEachSide(1),
@@ -86,11 +87,6 @@ class BookController extends Controller
     }
 
     public function store()
-    {
-        // ..
-    }
-
-    public function show()
     {
         // ..
     }

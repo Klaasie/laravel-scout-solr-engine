@@ -10,10 +10,10 @@
                 <div class="divide-y divide-gray-200">
                     <form action="{{ Request::path() }}">
                         <x-forms.container>
-                            <x-forms.input.text label="Title" name="title" :value="$title" />
-                            <x-forms.input.text label="Author" name="author" :value="$author" />
-                            <x-forms.input.text label="Summary" name="summary" :value="$summary" />
-                            <x-forms.input.text label="Publication date" name="publication_date" :value="$publicationDate" />
+                            <x-forms.input.text label="Title" name="title" :value="$title" placeholder="Title" />
+                            <x-forms.input.text label="Author" name="author" :value="$author" placeholder="Author" />
+                            <x-forms.input.text label="Summary" name="summary" :value="$summary" placeholder="Summary" />
+                            <x-forms.input.text label="Publication date" name="publication_date" :value="$publicationDate" placeholder="Publication date" />
                         </x-forms.container>
                         <x-button.block text="Search"/>
                     </form>

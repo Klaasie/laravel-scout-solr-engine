@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UserCreate;
 use App\Http\Requests\UserFilterPostRequest;
 use App\Http\Requests\UserUpdate;
 use App\Models\User;
+use App\Traits\HasMenu;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -12,6 +14,8 @@ use Illuminate\Routing\Redirector;
 
 class UserController extends Controller
 {
+    use HasMenu;
+
     public const MENU = 'users';
 
     private Factory $view;
@@ -37,9 +41,7 @@ class UserController extends Controller
             $query = User::search('*:*');
         }
 
-        $this->view->composer('components.menu', static function (View $view) {
-            $view->with('menu', self::MENU);
-        });
+        $this->setMenu(self::MENU);
 
         return $this->view->make('users.index', [
             'users' => $query->paginate(10)
@@ -52,17 +54,17 @@ class UserController extends Controller
 
     public function create()
     {
-        // ..
+        $this->setMenu(self::MENU);
+
+        return $this->view->make('users.create');
     }
 
-    public function store()
+    public function store(UserCreate $request, Redirector $redirector): RedirectResponse
     {
-        // ..
-    }
+        User::query()->create($request->only(['name', 'email', 'password']));
 
-    public function show()
-    {
-        // ..
+        return $redirector->route('users.index')
+            ->with('success', 'User created');
     }
 
     public function edit(string $id): View
@@ -72,9 +74,7 @@ class UserController extends Controller
 
         abort_if($user === null, 404);
 
-        $this->view->composer('components.menu', static function (View $view) {
-            $view->with('menu', self::MENU);
-        });
+        $this->setMenu(self::MENU);
 
         return $this->view->make('users.update', [
             'user' => $user,

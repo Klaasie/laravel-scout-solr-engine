@@ -17,7 +17,12 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', static fn(Redirector $redirector) => $redirector->route('users.index'));
 
-Route::resources([
-    'users' => Controllers\UserController::class,
-    'books' => Controllers\BookController::class,
-]);
+Route::resources(
+    [
+        'users' => Controllers\UserController::class,
+        'books' => Controllers\BookController::class,
+    ],
+    [
+        'except' => ['show']
+    ]
+);

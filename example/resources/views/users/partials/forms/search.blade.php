@@ -10,8 +10,8 @@
                 <div class="divide-y divide-gray-200">
                     <form action="{{ Request::path() }}">
                         <x-forms.container>
-                            <x-forms.input.text label="Name" name="name" :value="$name" />
-                            <x-forms.input.text label="Email" name="email" :value="$email" />
+                            <x-forms.input.text label="Name" name="name" :value="$name" placeholder="Name" />
+                            <x-forms.input.text label="Email" name="email" :value="$email" placeholder="Email" />
                         </x-forms.container>
                         <x-button.block text="Search"/>
                     </form>

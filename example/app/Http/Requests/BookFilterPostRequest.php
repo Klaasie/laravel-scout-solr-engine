@@ -31,6 +31,7 @@ class BookFilterPostRequest extends FormRequest
         return $this->get('summary');
     }
 
+    /** @return array<string, string> */
     public function rules(): array
     {
         return [];

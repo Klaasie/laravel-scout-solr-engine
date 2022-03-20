@@ -17,5 +17,8 @@
             <x-alert />
             {{ $slot }}
         </div>
+
+        <script src="https://unpkg.com/imask"></script>
+        @stack('scripts')
     </body>
 </html>

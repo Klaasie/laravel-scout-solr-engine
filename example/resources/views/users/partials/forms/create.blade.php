@@ -2,7 +2,7 @@
     <div class="relative py-3 sm:max-w-xl sm:mx-auto">
         <div id="crud-form" class="relative px-4 py-10 bg-white mx-8 md:mx-0 shadow rounded-3xl sm:p-10">
             <div class="max-w-md mx-auto">
-                <x-forms.heading icon="edit" title="Create User" />
+                <x-forms.heading icon="add" title="Create User" />
                 <div class="divide-y divide-gray-200">
                     <form action="{{ route('users.store') }}" method="POST">
                         @csrf

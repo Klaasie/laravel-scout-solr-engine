@@ -1,4 +1,4 @@
-<div class=" relative flex items-top justify-center py-10">
+<div class="relative flex items-top justify-center py-10">
     <div class="relative py-3 sm:max-w-xl sm:mx-auto">
         <div id="crud-form" class="relative px-4 py-10 bg-white mx-8 md:mx-0 shadow rounded-3xl sm:p-10">
             <div class="max-w-md mx-auto">

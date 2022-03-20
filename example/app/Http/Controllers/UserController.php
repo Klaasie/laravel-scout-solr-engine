@@ -83,8 +83,8 @@ class UserController extends Controller
 
     public function update(int $id, UserUpdate $request, Redirector $redirector): RedirectResponse
     {
-        User::query()->where('id', '=', $id)
-            ->update($request->only(['name', 'email']));
+        $user = User::query()->findOrFail($id);
+        $user->update($request->only(['name', 'email']));
 
         return $redirector->route('users.index')
             ->with('success', 'User updated');

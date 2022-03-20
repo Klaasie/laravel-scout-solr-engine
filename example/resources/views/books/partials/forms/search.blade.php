@@ -12,8 +12,8 @@
                         <x-forms.container>
                             <x-forms.input.text label="Title" name="title" :value="$title" placeholder="Title" />
                             <x-forms.input.text label="Author" name="author" :value="$author" placeholder="Author" />
-                            <x-forms.input.text label="Summary" name="summary" :value="$summary" placeholder="Summary" />
                             <x-forms.input.text label="Publication date" name="publication_date" :value="$publicationDate" placeholder="Publication date" />
+                            <x-forms.input.text label="Summary" name="summary" :value="$summary" placeholder="Summary" />
                         </x-forms.container>
                         <x-button.block text="Search"/>
                     </form>
@@ -24,6 +24,7 @@
     </div>
 </div>
 
-<div class="text-center mb-4">
-    <span class="italic"><span class="font-medium">{{ $queryTime }}</span> ms query time</span>
-</div>
+@push('scripts')
+    <script src="{{ mix('js/publication_date.js') }}"></script>
+@endpush
+

@@ -28,7 +28,7 @@ class UserController extends Controller
     public function index(UserFilterPostRequest $request): View
     {
         if ($request->anyFilled(['name', 'email'])) {
-            $query = User::search('');
+            $query = User::search();
 
             if ($name = $request->getName()) {
                 $query->where('name', $name);
@@ -52,7 +52,7 @@ class UserController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(): view
     {
         $this->setMenu(self::MENU);
 

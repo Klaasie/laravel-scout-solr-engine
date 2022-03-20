@@ -12,11 +12,11 @@
                                     <x-forms.error :message="$message"/>
                                 @enderror
                             </x-forms.input.text>
-                            <x-forms.input.text label="Email" name="email" :value="old('email')" placeholder="Email">
+                            <x-forms.input.email label="Email" name="email" :value="old('email')" placeholder="Email">
                                 @error('email')
                                     <x-forms.error :message="$message"/>
                                 @enderror
-                            </x-forms.input.text>
+                            </x-forms.input.email>
 
                             <x-forms.input.password label="Password" name="password" placeholder="Password">
                                 @error('password')

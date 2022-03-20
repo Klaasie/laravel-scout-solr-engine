@@ -10,7 +10,6 @@ use Illuminate\Support\ServiceProvider;
 use Laravel\Scout\EngineManager;
 use Scout\Solr\Engines\SolrEngine;
 use Solarium\Core\Client\Adapter\Curl;
-use Solarium\Core\Client\Endpoint;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class ScoutSolrServiceProvider extends ServiceProvider

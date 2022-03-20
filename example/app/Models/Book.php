@@ -19,7 +19,7 @@ class Book extends Model
     ];
 
     protected $casts = [
-        'publication_date' => 'datetime',
+        'publication_date' => 'datetime:Y-m-d',
     ];
 
     public function getId(): int

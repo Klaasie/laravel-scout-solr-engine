@@ -4,29 +4,29 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class BookFilterPostRequest extends FormRequest
+class BookCreate extends FormRequest
 {
     public function authorize(): bool
     {
         return true;
     }
 
-    public function getTitle(): ?string
+    public function getTitle(): string
     {
         return $this->get('title');
     }
 
-    public function getAuthor(): ?string
+    public function getAuthor(): string
     {
         return $this->get('author');
     }
 
-    public function getPublicationDate(): ?string
+    public function getPublicationDate(): string
     {
         return $this->get('publication_date');
     }
 
-    public function getSummary(): ?string
+    public function getSummary(): string
     {
         return $this->get('summary');
     }
@@ -34,6 +34,11 @@ class BookFilterPostRequest extends FormRequest
     /** @return array<string, string> */
     public function rules(): array
     {
-        return [];
+        return [
+            'title' => 'required',
+            'author' => 'required',
+            'publication_date' => 'required|date_format:Y-m-d',
+            'summary' => 'required',
+        ];
     }
 }

@@ -13,7 +13,7 @@ class UserFilterPostRequest extends FormRequest
 
     public function getName(): ?string
     {
-        if($this->isEmptyString('name')) {
+        if ($this->isEmptyString('name')) {
             return null;
         }
 
@@ -22,7 +22,7 @@ class UserFilterPostRequest extends FormRequest
 
     public function getEmail(): ?string
     {
-        if($this->isEmptyString('email')) {
+        if ($this->isEmptyString('email')) {
             return null;
         }
 

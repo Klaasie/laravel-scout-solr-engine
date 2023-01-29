@@ -4,17 +4,21 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title>Laravel</title>
+        <title>Laravel Scout Apache Solr Example</title>
 
         <!-- Fonts -->
         <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Two+Tone|Material+Icons+Round|Material+Icons+Sharp" rel="stylesheet">
+        <link href="{{ mix('css/app.css') }}" rel="stylesheet">
     </head>
     <body class="min-w-screen bg-gray-100">
-        @include('partials.menu')
+        <x-menu></x-menu>
         <div class="container mx-auto">
-            @include('partials.books.form')
-            @include('partials.books.table')
+            <x-alert />
+            {{ $slot }}
         </div>
+
+        <script src="https://unpkg.com/imask"></script>
+        @stack('scripts')
     </body>
 </html>

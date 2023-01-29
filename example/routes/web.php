@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers;
+use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -14,5 +15,14 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', Controllers\UserController::class);
-Route::get('/books', Controllers\BookController::class);
+Route::get('/', static fn(Redirector $redirector) => $redirector->route('users.index'));
+
+Route::resources(
+    [
+        'users' => Controllers\UserController::class,
+        'books' => Controllers\BookController::class,
+    ],
+    [
+        'except' => ['show']
+    ]
+);

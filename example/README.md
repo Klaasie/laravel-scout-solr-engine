@@ -15,15 +15,15 @@ __Migrate database__
 vendor/bin/sail artisan migrate
 ```
 
-__Run the user seeder__
-```
-vendor/bin/sail artisan db:seed --class=DatabaseSeeder   
-```
-
 __Create the Solr indexes__
 ```
 vendor/bin/sail artisan scout:index users
 vendor/bin/sail artisan scout:index books 
+```
+
+__Run the user seeder__
+```
+vendor/bin/sail artisan db:seed --class=DatabaseSeeder
 ```
 
 __Import the users__

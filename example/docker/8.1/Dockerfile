@@ -5,7 +5,7 @@ LABEL maintainer="Taylor Otwell"
 ARG WWWGROUP
 ARG NODE_VERSION=16
 
-WORKDIR /var/www/html
+WORKDIR /var/www/html/example
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV TZ=UTC

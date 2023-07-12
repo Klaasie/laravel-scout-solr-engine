@@ -120,7 +120,7 @@ class SolrEngine extends Engine
 
         return $model->getScoutModelsByIds($builder, $objectIds)
             ->filter(function ($model) use ($objectIds) {
-                return in_array($model->getScoutKey(), $objectIds, false);
+                return in_array($model->getScoutKey(), $objectIds);
             })->sortBy(function ($model) use ($objectIdPositions) {
                 return $objectIdPositions[$model->getScoutKey()];
             })->values();
@@ -146,7 +146,7 @@ class SolrEngine extends Engine
         return $model->getScoutModelsByIds($builder, $objectIds)
             ->cursor()
             ->filter(function ($model) use ($objectIds) {
-                return in_array($model->getScoutKey(), $objectIds, false);
+                return in_array($model->getScoutKey(), $objectIds);
             })->sortBy(function ($model) use ($objectIdPositions) {
                 return $objectIdPositions[$model->getScoutKey()];
             })->values();

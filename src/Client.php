@@ -72,7 +72,7 @@ class Client extends ClientBase implements ClientInterface
         $coreAdminQuery = $this->createCoreAdmin();
         $action = $coreAdminQuery->createCreate();
         $action->setCore($name);
-        $action->setConfigSet($this->config->get('scout-solr.create.config_set'));
+        $action->setConfigSet($this->config->get('scout-solr.endpoints.' . $name . '.config_set', '_default'));
         $coreAdminQuery->setAction($action);
 
         return $this->coreAdmin($coreAdminQuery, $this->getEndpointFromConfig($name));

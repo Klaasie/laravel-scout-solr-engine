@@ -33,8 +33,11 @@ class SolrEngine extends Engine
     private Repository $config;
     private Dispatcher $events;
 
-    public function __construct(ClientInterface $client, Repository $config, Dispatcher $events)
-    {
+    public function __construct(
+        ClientInterface $client,
+        Repository $config,
+        Dispatcher $events
+    ) {
         $this->client = $client;
         $this->config = $config;
         $this->events = $events;
@@ -172,28 +175,12 @@ class SolrEngine extends Engine
 
     public function createIndex($name, array $options = [])
     {
-        $coreAdminQuery = $this->client->createCoreAdmin();
-
-        $action = $coreAdminQuery->createCreate();
-        $action->setCore($name);
-        $action->setConfigSet($this->config->get('scout-solr.create.config_set'));
-
-        $coreAdminQuery->setAction($action);
-        return $this->client->coreAdmin($coreAdminQuery, $this->getEndpointFromConfig($name));
+        return $this->client->createCore($name);
     }
 
     public function deleteIndex($name)
     {
-        $coreAdminQuery = $this->client->createCoreAdmin();
-
-        $action = $coreAdminQuery->createUnload();
-        $action->setCore($name);
-        $action->setDeleteIndex($this->config->get('scout-solr.unload.delete_index'));
-        $action->setDeleteDataDir($this->config->get('scout-solr.unload.delete_data_dir'));
-        $action->setDeleteInstanceDir($this->config->get('scout-solr.unload.delete_instance_dir'));
-
-        $coreAdminQuery->setAction($action);
-        return $this->client->coreAdmin($coreAdminQuery, $this->getEndpointFromConfig($name));
+        return $this->client->deleteCore($name);
     }
 
     protected function performSearch(Builder $builder, array $options = []): Result
@@ -247,14 +234,7 @@ class SolrEngine extends Engine
         return $filters->values()->implode(' AND ');
     }
 
-    public function getEndpointFromConfig(string $name): ?Endpoint
-    {
-        if ($this->config->get('scout-solr.endpoints.' . $name) === null) {
-            return null;
-        }
 
-        return new Endpoint($this->config->get('scout-solr.endpoints.' . $name));
-    }
 
     /**
      * Dynamically call the Solr client instance.

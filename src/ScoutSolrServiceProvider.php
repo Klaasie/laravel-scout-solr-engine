@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Scout\Solr;
 
+use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
@@ -22,6 +23,7 @@ class ScoutSolrServiceProvider extends ServiceProvider
             $client = new Client(
                 new Curl(),
                 new EventDispatcher(),
+                $app->make(Repository::class),
                 null,
             );
 

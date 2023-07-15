@@ -73,7 +73,7 @@ return [
              */
             'router_name' => env('SOLR_ROUTER_NAME', ClientInterface::ROUTER_NAME_COMPOSITE_ID),
             'num_shards' => env('SOLR_NUM_SHARDS', 1),
-            'shards' => env('SOLR_SHARDS', 1),
+            'shards' => env('SOLR_SHARDS', 'shard-x,shard-y,shard-z'),
         ],
         // Example of a core defined through config
 //        'books' => [

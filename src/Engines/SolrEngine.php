@@ -19,7 +19,6 @@ use Scout\Solr\Client;
 use Scout\Solr\ClientInterface;
 use Scout\Solr\Events\AfterSelect;
 use Scout\Solr\Events\BeforeSelect;
-use Solarium\Core\Client\Endpoint;
 use Solarium\Core\Query\Result\ResultInterface;
 use Solarium\QueryType\Select\Result\Document;
 use Solarium\QueryType\Select\Result\Result;

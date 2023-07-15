@@ -12,8 +12,6 @@ use Solarium\Client as ClientBase;
 use Solarium\Core\Client\Adapter\AdapterInterface;
 use Solarium\Core\Client\Endpoint;
 use Solarium\Core\Query\Result\ResultInterface;
-use Solarium\QueryType\Server\Collections\Result\ClusterStatusResult;
-use Solarium\QueryType\Server\CoreAdmin\Result\Result;
 
 class Client extends ClientBase implements ClientInterface
 {

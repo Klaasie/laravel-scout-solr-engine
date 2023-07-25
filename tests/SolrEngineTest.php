@@ -40,6 +40,8 @@ class SolrEngineTest extends TestCase
         $update->shouldReceive('addDocuments')->with([0 => $document]);
         $update->shouldReceive('addCommit');
 
+        $client->shouldReceive('getEndpointFromConfig')->once();
+
         $client->shouldReceive('update')->with($update, null);
 
         $engine = $this->create_engine($client);
@@ -58,6 +60,8 @@ class SolrEngineTest extends TestCase
         $update->shouldReceive('createDocument')->never();
         $update->shouldReceive('addDocuments')->with([]);
         $update->shouldReceive('addCommit');
+
+        $client->shouldReceive('getEndpointFromConfig')->once();
 
         $client->shouldReceive('update')->with($update, null);
 
@@ -82,6 +86,8 @@ class SolrEngineTest extends TestCase
 
         $update->shouldReceive('addDocuments')->with([0 => $document]);
         $update->shouldReceive('addCommit');
+
+        $client->shouldReceive('getEndpointFromConfig')->once();
 
         $client->shouldReceive('update')->with($update, null);
 
@@ -114,7 +120,10 @@ class SolrEngineTest extends TestCase
         $update->shouldReceive('addDocuments')->with([0 => $document]);
         $update->shouldReceive('addCommit');
 
-        $client->shouldReceive('update')->with($update, Mockery::type(Endpoint::class));
+        $client->shouldReceive('getEndpointFromConfig')->once()
+            ->andReturn($endpoint = Mockery::mock(Endpoint::class));
+
+        $client->shouldReceive('update')->with($update, $endpoint);
 
         $engine = $this->create_engine($client);
         $engine->update(Collection::make([$model]));
@@ -131,6 +140,8 @@ class SolrEngineTest extends TestCase
 
         $delete->shouldReceive('addDeleteByIds')->with([1])->once();
         $delete->shouldReceive('addCommit');
+
+        $client->shouldReceive('getEndpointFromConfig')->once();
 
         $client->shouldReceive('update')->with($delete, null);
 
@@ -149,6 +160,8 @@ class SolrEngineTest extends TestCase
 
         $delete->shouldReceive('addDeleteByIds')->with(['custom-key.1'])->once();
         $delete->shouldReceive('addCommit');
+
+        $client->shouldReceive('getEndpointFromConfig')->once();
 
         $client->shouldReceive('update')->with($delete, null);
 
@@ -177,7 +190,10 @@ class SolrEngineTest extends TestCase
         $delete->shouldReceive('addDeleteByIds')->with([1])->once();
         $delete->shouldReceive('addCommit');
 
-        $client->shouldReceive('update')->with($delete, Mockery::type(Endpoint::class));
+        $client->shouldReceive('getEndpointFromConfig')->once()
+            ->andReturn($endpoint = Mockery::mock(Endpoint::class));
+
+        $client->shouldReceive('update')->with($delete, $endpoint);
 
         $engine = $this->create_engine($client);
         $engine->delete(Collection::make([$model]));
@@ -196,6 +212,8 @@ class SolrEngineTest extends TestCase
         $select->shouldReceive('setQuery')->with('*:*')->andReturn(Mockery::self());
         $select->shouldReceive('setStart')->with(0)->andReturn(Mockery::self());
         $select->shouldReceive('setRows')->with(10)->andReturn(Mockery::self());
+
+        $client->shouldReceive('getEndpointFromConfig')->once();
 
         $client->shouldReceive('select')->with($select, null);
 
@@ -225,7 +243,10 @@ class SolrEngineTest extends TestCase
         $select->shouldReceive('setStart')->with(0)->andReturn(Mockery::self());
         $select->shouldReceive('setRows')->with(10)->andReturn(Mockery::self());
 
-        $client->shouldReceive('select')->with($select, Mockery::type(Endpoint::class));
+        $client->shouldReceive('getEndpointFromConfig')->once()
+            ->andReturn($endpoint = Mockery::mock(Endpoint::class));
+
+        $client->shouldReceive('select')->with($select, $endpoint);
 
         $engine = $this->create_engine($client);
         $engine->search($builder);
@@ -246,6 +267,8 @@ class SolrEngineTest extends TestCase
         $select->shouldReceive('setQuery')->with('foo:1 AND bar:2')->andReturn(Mockery::self());
         $select->shouldReceive('setStart')->with(0)->andReturn(Mockery::self());
         $select->shouldReceive('setRows')->with(15)->andReturn(Mockery::self());
+
+        $client->shouldReceive('getEndpointFromConfig')->once();
 
         $client->shouldReceive('select')->with($select, null);
 
@@ -270,6 +293,8 @@ class SolrEngineTest extends TestCase
         $select->shouldReceive('setStart')->with(0)->andReturn(Mockery::self());
         $select->shouldReceive('setRows')->with(20)->andReturn(Mockery::self());
 
+        $client->shouldReceive('getEndpointFromConfig')->once();
+
         $client->shouldReceive('select')->with($select, null);
 
         $engine = $this->create_engine($client);
@@ -292,6 +317,8 @@ class SolrEngineTest extends TestCase
             ->andReturn(Mockery::self());
         $select->shouldReceive('setStart')->with(($page - 1) * $limit)->andReturn(Mockery::self());
         $select->shouldReceive('setRows')->with($limit)->andReturn(Mockery::self());
+
+        $client->shouldReceive('getEndpointFromConfig')->once();
 
         $client->shouldReceive('select')->with($select, null);
 
@@ -316,6 +343,8 @@ class SolrEngineTest extends TestCase
         $select->shouldReceive('addSort')->with('foo', 'desc')->andReturn(Mockery::self());
         $select->shouldReceive('setStart')->with(0)->andReturn(Mockery::self());
         $select->shouldReceive('setRows')->with(10)->andReturn(Mockery::self());
+
+        $client->shouldReceive('getEndpointFromConfig')->once();
 
         $client->shouldReceive('select')->with($select, null);
 

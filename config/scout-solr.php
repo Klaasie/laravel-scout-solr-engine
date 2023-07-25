@@ -2,20 +2,19 @@
 
 declare(strict_types=1);
 
+use Scout\Solr\ClientInterface;
+
 return [
     /*
     |--------------------------------------------------------------------------
-    | Solr Admin ConfigSet
+    | Solr Cloud
     |--------------------------------------------------------------------------
     |
-    | Set a default ConfigSet used for the createIndex command.
-    | Without a ConfigSet Solr won't be able to create indexes through the command.
+    | Different Solr APIs are used depending on whether standalone or cloud is being used.
     |
     |
     */
-    'create' => [
-        'config_set' => env('SOLR_CONFIG_SET', '_default'),
-    ],
+    'cloud' => env('SOLR_CLOUD', false),
 
     /*
     |--------------------------------------------------------------------------
@@ -64,14 +63,29 @@ return [
             'host' => env('SOLR_HOST', 'localhost'),
             'port' => env('SOLR_PORT', 8983),
             'path' => env('SOLR_PATH', '/'),
+            'config_set' => env('SOLR_CONFIG_SET', '_default'),
             // Core is set through searchableAs()
+
+            /*
+             * These settings are used with SOLR cloud.
+             * When using router_name "compositeId" the num_shards config is required.
+             * When using router_name "implicit" the shards config is required.
+             */
+            'router_name' => env('SOLR_ROUTER_NAME', ClientInterface::ROUTER_NAME_COMPOSITE_ID),
+            'num_shards' => env('SOLR_NUM_SHARDS', 1),
+            'shards' => env('SOLR_SHARDS', 'shard-x,shard-y,shard-z'),
         ],
         // Example of a core defined through config
 //        'books' => [
 //            'host' => env('SOLR_HOST', 'solr2'),
 //            'port' => env('SOLR_PORT', 8983),
 //            'path' => env('SOLR_PATH', '/'),
+//            'config_set' => env('SOLR_CONFIG_SET', '_default'),
 //            'core' => env('SOLR_CORE', 'books'),
+
+//            'router_name' => env('SOLR_ROUTER_NAME', ClientInterface::ROUTER_NAME_COMPOSITE_ID'),
+//            'num_shards' => env('SOLR_NUM_SHARDS', 1),
+//            'shards' => env('SOLR_SHARDS', 1),
 //        ],
     ],
 ];

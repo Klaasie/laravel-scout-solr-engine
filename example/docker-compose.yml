@@ -3,11 +3,11 @@ version: '3'
 services:
     solr.scout.test:
         build:
-            context: ./docker/8.2
+            context: ./docker/8.3
             dockerfile: Dockerfile
             args:
                 WWWGROUP: '${WWWGROUP}'
-        image: sail-8.2/app
+        image: sail-8.3/app
         extra_hosts:
             - 'host.docker.internal:host-gateway'
         ports:
@@ -85,6 +85,21 @@ services:
             - gettingstarted
         networks:
             - sail
+    solr.cloud:
+        image: solr
+        ports:
+            - "${FORWARD_ZOO_KEEPER_PORT:-9983}:9983"
+            - "${FORWARD_SOLR_PORT:-8985}:8983"
+        volumes:
+            - 'sailsolr2:/data.ms'
+        entrypoint:
+            - docker-entrypoint.sh
+            - solr
+            - start
+            - -c
+            - -f
+        networks:
+            - sail
     mailhog:
         image: 'mailhog/mailhog:latest'
         ports:
@@ -109,4 +124,6 @@ volumes:
     sailsolr:
         driver: local
     sailsolr2:
+        driver: local
+    sailsolrcloud:
         driver: local

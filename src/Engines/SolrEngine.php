@@ -233,8 +233,6 @@ class SolrEngine extends Engine
         return $filters->values()->implode(' AND ');
     }
 
-
-
     /**
      * Dynamically call the Solr client instance.
      *

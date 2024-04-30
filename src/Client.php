@@ -27,7 +27,6 @@ class Client extends ClientBase implements ClientInterface
         $this->config = $config;
     }
 
-
     public function setCore(Model $model): self
     {
         /** @noinspection PhpPossiblePolymorphicInvocationInspection */
@@ -43,8 +42,10 @@ class Client extends ClientBase implements ClientInterface
 
     public function createCore(string $name): ResultInterface
     {
+        $key = $this->config->has('scout-solr.endpoints.' . $name) ? $name : 'default';
+
         if ($this->config->get('scout-solr.cloud')) {
-            $routerName = $this->config->get('scout-solr.endpoints.' . $name . '.router_name');
+            $routerName = $this->config->get('scout-solr.endpoints.' . $key . '.router_name');
 
             $collectionAdminQuery = $this->createCollections();
 
@@ -54,30 +55,32 @@ class Client extends ClientBase implements ClientInterface
 
             match ($routerName) {
                 ClientInterface::ROUTER_NAME_COMPOSITE_ID => $action->setNumShards(
-                    $this->config->get('scout-solr.endpoints.' . $name . '.num_shards')
+                    $this->config->get('scout-solr.endpoints.' . $key . '.num_shards')
                 ),
                 ClientInterface::ROUTER_NAME_IMPLICIT => $action->setShards(
-                    $this->config->get('scout-solr.endpoints.' . $name . '.shards')
+                    $this->config->get('scout-solr.endpoints.' . $key . '.shards')
                 ),
                 default => InvalidRouterNameSupplied::forRouterName($routerName),
             };
 
             $collectionAdminQuery->setAction($action);
 
-            return $this->collections($collectionAdminQuery, $this->getEndpointFromConfig($name));
+            return $this->collections($collectionAdminQuery, $this->getEndpointFromConfig($key));
         }
 
         $coreAdminQuery = $this->createCoreAdmin();
         $action = $coreAdminQuery->createCreate();
         $action->setCore($name);
-        $action->setConfigSet($this->config->get('scout-solr.endpoints.' . $name . '.config_set', '_default'));
+        $action->setConfigSet($this->config->get('scout-solr.endpoints.' . $key . '.config_set', '_default'));
         $coreAdminQuery->setAction($action);
 
-        return $this->coreAdmin($coreAdminQuery, $this->getEndpointFromConfig($name));
+        return $this->coreAdmin($coreAdminQuery, $this->getEndpointFromConfig($key));
     }
 
     public function deleteCore(string $name): ResultInterface
     {
+        $key = $this->config->has('scout-solr.endpoints.' . $name) ? $name : 'default';
+
         if ($this->config->get('scout-solr.cloud')) {
             $collectionAdminQuery = $this->createCollections();
 
@@ -85,7 +88,7 @@ class Client extends ClientBase implements ClientInterface
             $action->setName($name);
             $collectionAdminQuery->setAction($action);
 
-            return $this->collections($collectionAdminQuery, $this->getEndpointFromConfig($name));
+            return $this->collections($collectionAdminQuery, $this->getEndpointFromConfig($key));
         }
 
         $coreAdminQuery = $this->createCoreAdmin();

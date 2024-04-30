@@ -8,7 +8,7 @@ This package provides a basic implementation of the Apache Solr search engine wi
 
 ## Installation
 
-`composer install klaasie/scout-solr-engine`
+`composer require klaasie/scout-solr-engine`
 
 ## config
 

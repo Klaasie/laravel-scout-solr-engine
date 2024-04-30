@@ -6,7 +6,7 @@ ARG WWWGROUP
 ARG NODE_VERSION=20
 ARG POSTGRES_VERSION=15
 
-WORKDIR /var/www/html
+WORKDIR /var/www/html/example
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV TZ=UTC

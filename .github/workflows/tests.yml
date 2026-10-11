@@ -81,6 +81,32 @@ jobs:
       - name: Execute codesniffer tests
         run: ./vendor/bin/phpcs --standard=./phpcs.xml --report-full --report-checkstyle=./phpcs.xml.report ./ || (cs2pr ./phpcs.xml.report && exit 1)
 
+  # Static analysis (PHPStan with Larastan)
+  phpstan:
+    runs-on: ubuntu-latest
+    name: PHPStan
+    steps:
+      - uses: actions/checkout@v7
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, dom, fileinfo, curl
+          coverage: none
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+      - name: Cache composer dependencies
+        uses: actions/cache@v6
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-phpstan-composer-${{ hashFiles('composer.json') }}
+          restore-keys: ${{ runner.os }}-phpstan-composer-
+      - name: Install Composer dependencies
+        run: composer update --prefer-stable --prefer-dist --no-interaction --no-progress
+      - name: Run PHPStan
+        run: ./vendor/bin/phpstan analyse --error-format=github --no-progress
+
   # Integration tests against a real Solr instance
   solr-integration-tests:
     runs-on: ubuntu-latest

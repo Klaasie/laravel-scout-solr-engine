@@ -25,6 +25,9 @@ class Client extends ClientBase implements ClientInterface
      */
     private array $resolvedEndpoints = [];
 
+    /**
+     * @param array<string, mixed>|null $options
+     */
     public function __construct(
         AdapterInterface $adapter,
         EventDispatcherInterface $eventDispatcher,
@@ -130,6 +133,9 @@ class Client extends ClientBase implements ClientInterface
         return $this->config->has('scout-solr.endpoints.' . $name) ? $name : 'default';
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function endpointConfig(string $name): array
     {
         return (array) $this->config->get('scout-solr.endpoints.' . $this->endpointKey($name), []);

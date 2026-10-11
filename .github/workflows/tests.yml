@@ -106,6 +106,9 @@ jobs:
         run: composer update --prefer-stable --prefer-dist --no-interaction --no-progress
       - name: Run PHPStan
         run: ./vendor/bin/phpstan analyse --error-format=github --no-progress
+      - name: All PHPStan errors in one annotation
+        if: failure()
+        run: ./vendor/bin/phpstan analyse --error-format=raw --no-progress 2>&1 | head -c 20000 | awk 'BEGIN{ORS="%0A"} {print}' | sed 's/^/::error title=phpstan-all::/'
 
   # Integration tests against a real Solr instance
   solr-integration-tests:

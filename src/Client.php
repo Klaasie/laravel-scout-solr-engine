@@ -17,6 +17,14 @@ class Client extends ClientBase implements ClientInterface
 {
     private Repository $config;
 
+    /**
+     * Endpoints resolved per searchableAs() name, so each model talks to its own
+     * core without changing shared client state.
+     *
+     * @var array<string, Endpoint>
+     */
+    private array $resolvedEndpoints = [];
+
     public function __construct(
         AdapterInterface $adapter,
         EventDispatcherInterface $eventDispatcher,
@@ -27,22 +35,24 @@ class Client extends ClientBase implements ClientInterface
         $this->config = $config;
     }
 
-    public function setCore(Model $model): self
+    public function endpointFor(Model|string $model): Endpoint
     {
         /** @noinspection PhpPossiblePolymorphicInvocationInspection */
-        $searchableAs = $model->searchableAs();
+        $name = $model instanceof Model ? (string) $model->searchableAs() : $model;
 
-        if (is_array($searchableAs)) {
-            return $this->addEndpoint($searchableAs);
+        if (!isset($this->resolvedEndpoints[$name])) {
+            $options = $this->endpointConfig($name);
+            $options['core'] ??= $name;
+
+            $this->resolvedEndpoints[$name] = new Endpoint($options);
         }
 
-        $this->getEndpoint()->setCore($searchableAs);
-        return $this;
+        return $this->resolvedEndpoints[$name];
     }
 
     public function createCore(string $name): ResultInterface
     {
-        $key = $this->config->has('scout-solr.endpoints.' . $name) ? $name : 'default';
+        $key = $this->endpointKey($name);
 
         if ($this->config->get('scout-solr.cloud')) {
             $routerName = $this->config->get('scout-solr.endpoints.' . $key . '.router_name');
@@ -55,7 +65,7 @@ class Client extends ClientBase implements ClientInterface
 
             match ($routerName) {
                 ClientInterface::ROUTER_NAME_COMPOSITE_ID => $action->setNumShards(
-                    $this->config->get('scout-solr.endpoints.' . $key . '.num_shards')
+                    (int) $this->config->get('scout-solr.endpoints.' . $key . '.num_shards')
                 ),
                 ClientInterface::ROUTER_NAME_IMPLICIT => $action->setShards(
                     $this->config->get('scout-solr.endpoints.' . $key . '.shards')
@@ -65,7 +75,7 @@ class Client extends ClientBase implements ClientInterface
 
             $collectionAdminQuery->setAction($action);
 
-            return $this->collections($collectionAdminQuery, $this->getEndpointFromConfig($key));
+            return $this->collections($collectionAdminQuery, $this->adminEndpoint($name));
         }
 
         $coreAdminQuery = $this->createCoreAdmin();
@@ -74,13 +84,11 @@ class Client extends ClientBase implements ClientInterface
         $action->setConfigSet($this->config->get('scout-solr.endpoints.' . $key . '.config_set', '_default'));
         $coreAdminQuery->setAction($action);
 
-        return $this->coreAdmin($coreAdminQuery, $this->getEndpointFromConfig($key));
+        return $this->coreAdmin($coreAdminQuery, $this->adminEndpoint($name));
     }
 
     public function deleteCore(string $name): ResultInterface
     {
-        $key = $this->config->has('scout-solr.endpoints.' . $name) ? $name : 'default';
-
         if ($this->config->get('scout-solr.cloud')) {
             $collectionAdminQuery = $this->createCollections();
 
@@ -88,27 +96,42 @@ class Client extends ClientBase implements ClientInterface
             $action->setName($name);
             $collectionAdminQuery->setAction($action);
 
-            return $this->collections($collectionAdminQuery, $this->getEndpointFromConfig($key));
+            return $this->collections($collectionAdminQuery, $this->adminEndpoint($name));
         }
 
         $coreAdminQuery = $this->createCoreAdmin();
 
         $action = $coreAdminQuery->createUnload();
         $action->setCore($name);
-        $action->setDeleteIndex($this->config->get('scout-solr.unload.delete_index'));
-        $action->setDeleteDataDir($this->config->get('scout-solr.unload.delete_data_dir'));
-        $action->setDeleteInstanceDir($this->config->get('scout-solr.unload.delete_instance_dir'));
+        $action->setDeleteIndex((bool) $this->config->get('scout-solr.unload.delete_index'));
+        $action->setDeleteDataDir((bool) $this->config->get('scout-solr.unload.delete_data_dir'));
+        $action->setDeleteInstanceDir((bool) $this->config->get('scout-solr.unload.delete_instance_dir'));
         $coreAdminQuery->setAction($action);
 
-        return $this->coreAdmin($coreAdminQuery, $this->getEndpointFromConfig($name));
+        return $this->coreAdmin($coreAdminQuery, $this->adminEndpoint($name));
     }
 
-    public function getEndpointFromConfig(string $name): ?Endpoint
+    /**
+     * The Solr instance a core lives on, without a core set: used for admin requests.
+     */
+    private function adminEndpoint(string $name): Endpoint
     {
-        if ($this->config->get('scout-solr.endpoints.' . $name) === null) {
-            return null;
-        }
+        $options = $this->endpointConfig($name);
+        unset($options['core'], $options['collection']);
 
-        return new Endpoint($this->config->get('scout-solr.endpoints.' . $name));
+        return new Endpoint($options);
+    }
+
+    /**
+     * A core uses its own endpoint config when one is keyed by its name, and the default one otherwise.
+     */
+    private function endpointKey(string $name): string
+    {
+        return $this->config->has('scout-solr.endpoints.' . $name) ? $name : 'default';
+    }
+
+    private function endpointConfig(string $name): array
+    {
+        return (array) $this->config->get('scout-solr.endpoints.' . $this->endpointKey($name), []);
     }
 }

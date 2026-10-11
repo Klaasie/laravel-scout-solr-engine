@@ -15,36 +15,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - php: '8.0'
-            laravel: 9.*
-            testbench: 7.*
-          - php: '8.1'
-            laravel: 9.*
-            testbench: 7.*
-          - php: '8.2'
-            laravel: 9.*
-            testbench: 7.*
-          - php: '8.3'
-            laravel: 9.*
-            testbench: 7.*
-          - php: '8.1'
-            laravel: 10.*
-            testbench: 8.*
-          - php: '8.2'
-            laravel: 10.*
-            testbench: 8.*
-          - php: '8.3'
-            laravel: 10.*
-            testbench: 8.*
-          - php: '8.2'
-            laravel: 11.*
-            testbench: 9.*
-          - php: '8.3'
-            laravel: 11.*
-            testbench: 9.*
-          - php: '8.4'
-            laravel: 11.*
-            testbench: 9.*
           - php: '8.2'
             laravel: 12.*
             testbench: 10.*
@@ -54,7 +24,25 @@ jobs:
           - php: '8.4'
             laravel: 12.*
             testbench: 10.*
-    name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }}
+          - php: '8.5'
+            laravel: 12.*
+            testbench: 10.*
+          - php: '8.3'
+            laravel: 13.*
+            testbench: 11.*
+          - php: '8.4'
+            laravel: 13.*
+            testbench: 11.*
+          - php: '8.5'
+            laravel: 13.*
+            testbench: 11.*
+          # Oldest supported Scout and Solarium
+          - php: '8.2'
+            laravel: 12.*
+            testbench: 10.*
+            extra: '"laravel/scout:^10.0" "solarium/solarium:^6.3"'
+            label: ' / Scout 10 / Solarium 6'
+    name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }}${{ matrix.label }}
     steps:
       - uses: actions/checkout@v7
       - name: Setup PHP
@@ -71,11 +59,11 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-php${{ matrix.php }}-laravel${{ matrix.laravel }}-composer-${{ hashFiles('composer.json') }}
+          key: ${{ runner.os }}-php${{ matrix.php }}-laravel${{ matrix.laravel }}-${{ matrix.label }}-composer-${{ hashFiles('composer.json') }}
           restore-keys: ${{ runner.os }}-php${{ matrix.php }}-laravel${{ matrix.laravel }}-composer-
       - name: Install Composer dependencies
         run: |
-          composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
+          composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" ${{ matrix.extra }} --no-interaction --no-update
           composer update --prefer-stable --prefer-dist --no-interaction --no-progress
       - name: Execute tests (Unit and Feature tests) via PHPUnit
         run: ./vendor/bin/phpunit --testsuite Unit --log-junit junit.xml
@@ -102,17 +90,24 @@ jobs:
         include:
           - solr: '8.11'
             php: '8.4'
-            laravel: 12.*
-            testbench: 10.*
+            laravel: 13.*
+            testbench: 11.*
           - solr: '9'
             php: '8.4'
+            laravel: 13.*
+            testbench: 11.*
+          - solr: '10'
+            php: '8.4'
+            laravel: 13.*
+            testbench: 11.*
+          # Oldest supported PHP, Laravel, Scout and Solarium
+          - solr: '9'
+            php: '8.2'
             laravel: 12.*
             testbench: 10.*
-          - solr: '9'
-            php: '8.1'
-            laravel: 10.*
-            testbench: 8.*
-    name: Solr ${{ matrix.solr }} / PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }}
+            extra: '"laravel/scout:^10.0" "solarium/solarium:^6.3"'
+            label: ' / Scout 10 / Solarium 6'
+    name: Solr ${{ matrix.solr }} / PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }}${{ matrix.label }}
     env:
       SOLR_HOST: localhost
       SOLR_PORT: 8983
@@ -142,11 +137,11 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-php${{ matrix.php }}-laravel${{ matrix.laravel }}-composer-${{ hashFiles('composer.json') }}
+          key: ${{ runner.os }}-php${{ matrix.php }}-laravel${{ matrix.laravel }}-${{ matrix.label }}-composer-${{ hashFiles('composer.json') }}
           restore-keys: ${{ runner.os }}-php${{ matrix.php }}-laravel${{ matrix.laravel }}-composer-
       - name: Install Composer dependencies
         run: |
-          composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
+          composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" ${{ matrix.extra }} --no-interaction --no-update
           composer update --prefer-stable --prefer-dist --no-interaction --no-progress
       - name: Execute integration tests via PHPUnit
         run: ./vendor/bin/phpunit --testsuite Integration --log-junit junit.xml

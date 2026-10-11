@@ -6,6 +6,13 @@
 
 This package provides a basic implementation of the Apache Solr search engine within Laravel Scout.
 
+| Package | PHP | Laravel | Scout | Solarium | Solr (tested) |
+|---------|-----|---------|-------|----------|---------------|
+| 4.x | 8.2+ | 12, 13 | 10, 11 | 6.3, 7 | 8.11, 9, 10 |
+| 3.x | 8.0+ | 9 – 12 | 9, 10 | 6 | |
+
+Upgrading from 3.x? See [UPGRADE.md](UPGRADE.md).
+
 ## Installation
 
 `composer require klaasie/scout-solr-engine`
@@ -76,7 +83,7 @@ The integration tests in [`tests/Integration`](tests/Integration) are working ex
 This package provides a config file that can be modified using .env variables.  
 You can initialize your own config file with: 
 
-`php artisan vendor:publish --provider="Scout\Solr\ScoutSolrServiceProvider"`
+`php artisan vendor:publish --tag=scout-solr-config`
 
 ### scout:index
 
@@ -88,6 +95,29 @@ For more information, see [https://solr.apache.org/guide/8_9/config-sets.html#co
 With the official `solr` Docker image, the config sets live outside the Solr home, so creating a core from `_default` fails until you copy them in. The included `docker-compose.yml` does this for you; with your own container, run:
 
 `docker exec <container> cp -r /opt/solr/server/solr/configsets /var/solr/data/`
+
+### HTTP adapter and timeouts
+
+By default Solarium's cURL adapter is used with a 5 second timeout. Change it in `.env`:
+
+```dotenv
+SOLR_HTTP_ADAPTER=curl   # or "http" to use PHP streams instead of ext-curl
+SOLR_TIMEOUT=10
+SOLR_CONNECTION_TIMEOUT=2
+```
+
+To use any other Solarium adapter, such as the PSR-18 adapter, bind it in a service provider; the settings above are then ignored:
+
+```php
+use Solarium\Core\Client\Adapter\AdapterInterface;
+use Solarium\Core\Client\Adapter\Psr18Adapter;
+
+$this->app->singleton(AdapterInterface::class, fn () => new Psr18Adapter(
+    $httpClient,      // any PSR-18 client
+    $requestFactory,  // PSR-17 request factory
+    $streamFactory    // PSR-17 stream factory
+));
+```
 
 ### Cores (indexes)
 
@@ -106,8 +136,8 @@ It's important for the configuration key to match the `searchableAs()` of the mo
         'host' => env('SOLR_BOOKS_HOST', 'solr2'),
         'port' => env('SOLR_BOOKS_PORT', 8983),
         'path' => '/',
-        'core' => 'books',
         'config_set' => '_default',
+        // 'core' => 'books_v2', // only needed when the core name differs from the key
     ],
 ],
 ```
@@ -115,7 +145,9 @@ It's important for the configuration key to match the `searchableAs()` of the mo
 ## Searching and filtering
 
 - The search text is sent to Solr as-is, so Solr query syntax works: `Book::search('title:dune OR author:herbert')`. An empty search matches all documents.
-- `where`, `whereIn` and `whereNotIn` become a Solr filter query. String values are quoted so they match literally; numbers are sent as-is and booleans as `true`/`false`. Set `SOLR_ESCAPE_FILTER_VALUES=false` to send raw values instead, or use the `BeforeSelect` event for complex filters.
+- `where`, `whereIn` and `whereNotIn` become a Solr filter query. String values are quoted so they match literally; numbers are sent as-is, booleans as `true`/`false` and dates in Solr's date format. Set `SOLR_ESCAPE_FILTER_VALUES=false` to send raw values instead, or use the `BeforeSelect` event for complex filters.
+- On Scout 11, `where` also accepts comparison operators, which become Solr ranges: `where('year_i', '>=', 1950)` sends `year_i:[1950 TO *]`. Supported: `=`, `!=`, `<>`, `>`, `>=`, `<`, `<=`.
+- `where('field', null)` matches documents without a value for that field; with `!=` it matches documents that have one.
 - Documents are stored with Solr's `id` field set to the model's scout key (`getScoutKey()`), so custom scout keys work without adding `id` to `toSearchableArray()`.
 
 ## [Solarium](https://github.com/solariumphp/solarium)
@@ -127,13 +159,27 @@ Visit [https://solarium.readthedocs.io/en/stable/](https://solarium.readthedocs.
 For convenience, any unknown methods used on the engine will be forwarded to the solarium client.
 
 ```php
-$model = new \App\Models\SearchableModel();
+$model = new \App\Models\Book();
 
 /** @var \Scout\Solr\Engines\SolrEngine $engine */
 $engine = app(\Laravel\Scout\EngineManager::class)->engine();
-$select = $engine->setCore($model)->createSelect();
+$select = $engine->createSelect();
 $select->setQuery('*:*');
-$result = $engine->select($select, $engine->getEndpointFromConfig($model->searchableAs())); // getEndpointFromConfig() is only necessary when your model does not use the default solr instance.
+
+// endpointFor() resolves the model's core and Solr instance.
+$result = $engine->select($select, $engine->endpointFor($model));
+```
+
+The client is also available from the container as `Scout\Solr\Client` (or `Scout\Solr\ClientInterface`).
+
+A search callback receives the model's endpoint in its options, so it can query the right core:
+
+```php
+Book::search('dune', function ($client, string $query, array $options) {
+    $select = $client->createSelect()->setQuery($query);
+
+    return $client->select($select, $options['endpoint']);
+})->get();
 ```
 
 ## Events
@@ -142,7 +188,7 @@ The Solr Engine dispatches several events allowing you to hook into specific poi
 | Event | Usage |
 |---------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
 |Scout\Solr\Events\BeforeSelect|Contains the Solr `Solarium\QueryType\Select\Query\Query` object and Scout `Builder` object. This event allows you to create complex queries using the Solarium package.|
-|Scout\Solr\Events\AfterSelect|Contains the Solr `Solarium\QueryType\Select\Result\Result` object and `Model` object. This event allows you to inspect or adjust the raw Solr result before it is mapped to models.|
+|Scout\Solr\Events\AfterSelect|Contains the Solr `Solarium\QueryType\Select\Result\Result` object, the `Model` and the Scout `Builder`. This event allows you to inspect or adjust the raw Solr result before it is mapped to models.|
 
 For example, a subscriber that shares Solr's query time with every view:
 

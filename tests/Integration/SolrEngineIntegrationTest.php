@@ -4,6 +4,7 @@ namespace Scout\Solr\Tests\Integration;
 
 use Illuminate\Support\LazyCollection;
 use Laravel\Scout\Builder;
+use ReflectionMethod;
 use Scout\Solr\Tests\Integration\Fixtures\Book;
 
 class SolrEngineIntegrationTest extends IntegrationTestCase
@@ -55,10 +56,6 @@ class SolrEngineIntegrationTest extends IntegrationTestCase
 
     public function test_where_not_in(): void
     {
-        if (!method_exists(Builder::class, 'whereNotIn')) {
-            $this->markTestSkipped('whereNotIn requires laravel/scout 10 or newer.');
-        }
-
         $this->seedBooks();
 
         $titles = Book::search('author_t:tolkien')
@@ -66,6 +63,24 @@ class SolrEngineIntegrationTest extends IntegrationTestCase
             ->get()->pluck('title')->sort()->values()->all();
 
         $this->assertSame(['The Fellowship of the Ring', 'The Hobbit'], $titles);
+    }
+
+    public function test_where_operators(): void
+    {
+        if ((new ReflectionMethod(Builder::class, 'where'))->getNumberOfParameters() < 3) {
+            $this->markTestSkipped('where() operators require laravel/scout 11 or newer.');
+        }
+
+        $this->seedBooks();
+
+        $years = Book::search('')
+            ->where('year_i', '>', 1937)
+            ->where('year_i', '<=', 1965)
+            ->where('genre_s', '!=', 'essay')
+            ->orderBy('year_i', 'asc')
+            ->get()->pluck('year')->all();
+
+        $this->assertSame([1954, 1965], $years);
     }
 
     public function test_results_keep_solr_sort_order(): void

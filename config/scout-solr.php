@@ -54,6 +54,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | HTTP
+    |--------------------------------------------------------------------------
+    |
+    | The Solarium adapter used to talk to Solr: "curl" (needs ext-curl) or "http"
+    | (PHP streams). To use another adapter, such as Solarium's Psr18Adapter, bind
+    | Solarium\Core\Client\Adapter\AdapterInterface in the container; these
+    | settings are then ignored. Timeouts are in seconds.
+    |
+    */
+    'http' => [
+        'adapter' => env('SOLR_HTTP_ADAPTER', 'curl'),
+        'timeout' => env('SOLR_TIMEOUT', 5),
+        'connection_timeout' => env('SOLR_CONNECTION_TIMEOUT'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Solr Endpoint
     |--------------------------------------------------------------------------
     |
@@ -61,7 +78,8 @@ return [
     | A core is not necessary here, the client will set the right core based on the model searchableAs() value.
     |
     | If a model is stored on a different instance of Solr additional configs can be provided here.
-    | It is important that the key of the configuration is equal to the models searchableAs()
+    | It is important that the key of the configuration is equal to the models searchableAs().
+    | The core defaults to that same name, so 'core' only needs setting when it differs.
     |
     |
     */

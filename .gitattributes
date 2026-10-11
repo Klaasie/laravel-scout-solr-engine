@@ -9,5 +9,7 @@
 /docs export-ignore
 /README.md export-ignore
 /UPGRADE.md export-ignore
+/AGENTS.md export-ignore
+/CLAUDE.md export-ignore
 /phpcs.xml export-ignore
 /phpstan.neon.dist export-ignore

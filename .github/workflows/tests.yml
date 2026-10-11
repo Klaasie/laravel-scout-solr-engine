@@ -8,75 +8,87 @@ on:
       - master
 jobs:
 
-  # Unit tests (phpunit)
+  # Unit tests (phpunit) and code style (phpcs)
   laravel-tests:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         include:
-          - php: 8.0
-            env:
-              LARAVEL: 9.*
-              TESTBENCH: 7.*
-          - php: 8.1
-            env:
-              LARAVEL: 9.*
-              TESTBENCH: 7.*
-          - php: 8.2
-            env:
-              LARAVEL: 9.*
-              TESTBENCH: 7.*
-          - php: 8.3
-            env:
-              LARAVEL: 9.*
-              TESTBENCH: 7.*
-          - php: 8.1
-            env:
-              LARAVEL: 10.*
-              TESTBENCH: 8.*
-          - php: 8.2
-            env:
-              LARAVEL: 10.*
-              TESTBENCH: 8.*
-          - php: 8.2
-            env:
-              LARAVEL: 10.*
-              TESTBENCH: 8.*
-          - php: 8.3
-            env:
-              LARAVEL: 10.*
-              TESTBENCH: 8.*
-          - php: 8.2
-            env:
-              LARAVEL: 11.*
-              TESTBENCH: 9.*
-          - php: 8.3
-            env:
-              LARAVEL: 11.*
-              TESTBENCH: 9.*
-    env: ${{ matrix.env }}
+          - php: '8.0'
+            laravel: 9.*
+            testbench: 7.*
+          - php: '8.1'
+            laravel: 9.*
+            testbench: 7.*
+          - php: '8.2'
+            laravel: 9.*
+            testbench: 7.*
+          - php: '8.3'
+            laravel: 9.*
+            testbench: 7.*
+          - php: '8.1'
+            laravel: 10.*
+            testbench: 8.*
+          - php: '8.2'
+            laravel: 10.*
+            testbench: 8.*
+          - php: '8.3'
+            laravel: 10.*
+            testbench: 8.*
+          - php: '8.2'
+            laravel: 11.*
+            testbench: 9.*
+          - php: '8.3'
+            laravel: 11.*
+            testbench: 9.*
+          - php: '8.4'
+            laravel: 11.*
+            testbench: 9.*
+          - php: '8.2'
+            laravel: 12.*
+            testbench: 10.*
+          - php: '8.3'
+            laravel: 12.*
+            testbench: 10.*
+          - php: '8.4'
+            laravel: 12.*
+            testbench: 10.*
+    name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: mbstring, dom, fileinfo
+          extensions: mbstring, dom, fileinfo, pdo_sqlite
+          coverage: none
           tools: cs2pr
       - name: Get composer cache directory
         id: composer-cache
-        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
       - name: Cache composer dependencies
-        uses: actions/cache@v1
+        uses: actions/cache@v6
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-
+          key: ${{ runner.os }}-php${{ matrix.php }}-laravel${{ matrix.laravel }}-composer-${{ hashFiles('composer.json') }}
+          restore-keys: ${{ runner.os }}-php${{ matrix.php }}-laravel${{ matrix.laravel }}-composer-
       - name: Install Composer dependencies
         run: |
-          composer require "laravel/framework:${LARAVEL}" "orchestra/testbench:${TESTBENCH}" --no-interaction --no-update
-          composer update --prefer-stable --prefer-dist --no-interaction
+          composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
+          composer update --prefer-stable --prefer-dist --no-interaction --no-progress
       - name: Execute tests (Unit and Feature tests) via PHPUnit
-        run: ./vendor/bin/phpunit
+        run: ./vendor/bin/phpunit --log-junit junit.xml
+      - name: Annotate PHPUnit failures
+        if: failure() && hashFiles('junit.xml') != ''
+        run: |
+          php -r '
+            $xml = simplexml_load_file("junit.xml");
+            foreach ($xml->xpath("//testcase[failure or error]") as $case) {
+                $node = $case->failure ?: $case->error;
+                $msg = str_replace(["%", "\r", "\n"], ["%25", "%0D", "%0A"], substr((string) $node, 0, 1500));
+                echo "::error title=" . $case["name"] . "::" . $msg . PHP_EOL;
+            }
+          '
       - name: Execute codesniffer tests
         run: './vendor/bin/phpcs --standard=./phpcs.xml ./'

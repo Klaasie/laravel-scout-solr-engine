@@ -7,12 +7,14 @@ declare(strict_types=1);
 
 namespace Scout\Solr\Engines;
 
+use DateTimeInterface;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\LazyCollection;
+use InvalidArgumentException;
 use Laravel\Scout\Builder;
 use Laravel\Scout\Engines\Engine;
 use Scout\Solr\Client;
@@ -29,18 +31,14 @@ use Solarium\QueryType\Select\Result\Result;
  */
 class SolrEngine extends Engine
 {
-    private ClientInterface $client;
-    private Repository $config;
-    private Dispatcher $events;
+    private Helper $helper;
 
     public function __construct(
-        ClientInterface $client,
-        Repository $config,
-        Dispatcher $events
+        private ClientInterface $client,
+        private Repository $config,
+        private Dispatcher $events
     ) {
-        $this->client = $client;
-        $this->config = $config;
-        $this->events = $events;
+        $this->helper = new Helper();
     }
 
     public function update($models): ?ResultInterface
@@ -49,13 +47,10 @@ class SolrEngine extends Engine
             return null;
         }
 
-        $this->client->setCore($models->first());
-
         $update = $this->client->createUpdate();
         $documents = $models->map(static function (Model $model) use ($update) {
             if (empty($searchableData = $model->toSearchableArray())) {
-                /** @noinspection PhpInconsistentReturnPointsInspection */
-                return;
+                return null;
             }
 
             // Solr's unique key must hold the scout key, which delete() and map() rely on.
@@ -67,7 +62,7 @@ class SolrEngine extends Engine
         $update->addDocuments($documents);
         $update->addCommit();
 
-        return $this->client->update($update, $this->getEndpointFromConfig($models->first()->searchableAs()));
+        return $this->client->update($update, $this->client->endpointFor($models->first()));
     }
 
     public function delete($models): void
@@ -75,8 +70,6 @@ class SolrEngine extends Engine
         if ($models->isEmpty()) {
             return;
         }
-
-        $this->client->setCore($models->first());
 
         $delete = $this->client->createUpdate();
         $delete->addDeleteByIds(
@@ -86,10 +79,10 @@ class SolrEngine extends Engine
         );
         $delete->addCommit();
 
-        $this->client->update($delete, $this->getEndpointFromConfig($models->first()->searchableAs()));
+        $this->client->update($delete, $this->client->endpointFor($models->first()));
     }
 
-    public function search(Builder $builder): Result
+    public function search(Builder $builder): mixed
     {
         return $this->performSearch($builder, array_filter([
             'filters' => $this->filters($builder),
@@ -97,7 +90,7 @@ class SolrEngine extends Engine
         ]));
     }
 
-    public function paginate(Builder $builder, $perPage, $page)
+    public function paginate(Builder $builder, $perPage, $page): mixed
     {
         return $this->performSearch($builder, array_filter([
             'filters' => $this->filters($builder),
@@ -108,8 +101,13 @@ class SolrEngine extends Engine
 
     public function mapIds($results): SupportCollection
     {
-        return collect($results)->map(static function (Document $document) {
-            return $document->getFields()['id'];
+        return $this->mapIdsFrom($results, 'id');
+    }
+
+    public function mapIdsFrom($results, $key): SupportCollection
+    {
+        return collect($results)->map(static function (Document $document) use ($key) {
+            return $document->getFields()[$key] ?? null;
         })->values();
     }
 
@@ -117,7 +115,7 @@ class SolrEngine extends Engine
      * @param Builder $builder
      * @param Result $results
      * @param Model $model
-     * @return Collection|void
+     * @return Collection
      */
     public function map(Builder $builder, $results, $model)
     {
@@ -125,14 +123,12 @@ class SolrEngine extends Engine
             return $model->newCollection();
         }
 
-        $objectIds = collect($results->getDocuments())->map(static function (Document $document) {
-            return $document->getFields()['id'];
-        })->values()->all();
+        $objectIds = $this->mapIds($results->getDocuments())->all();
         $objectIdPositions = array_flip($objectIds);
 
         return $model->getScoutModelsByIds($builder, $objectIds)
-            ->filter(function ($model) use ($objectIds) {
-                return in_array($model->getScoutKey(), $objectIds);
+            ->filter(function ($model) use ($objectIdPositions) {
+                return isset($objectIdPositions[$model->getScoutKey()]);
             })->sortBy(function ($model) use ($objectIdPositions) {
                 return $objectIdPositions[$model->getScoutKey()];
             })->values();
@@ -142,7 +138,7 @@ class SolrEngine extends Engine
      * @param Builder $builder
      * @param Result $results
      * @param Model $model
-     * @return LazyCollection|void
+     * @return LazyCollection
      */
     public function lazyMap(Builder $builder, $results, $model)
     {
@@ -150,15 +146,13 @@ class SolrEngine extends Engine
             return LazyCollection::make($model->newCollection());
         }
 
-        $objectIds = collect($results->getDocuments())->map(static function (Document $document) {
-            return $document->getFields()['id'];
-        })->values()->all();
+        $objectIds = $this->mapIds($results->getDocuments())->all();
         $objectIdPositions = array_flip($objectIds);
 
         return $model->queryScoutModelsByIds($builder, $objectIds)
             ->cursor()
-            ->filter(function ($model) use ($objectIds) {
-                return in_array($model->getScoutKey(), $objectIds);
+            ->filter(function ($model) use ($objectIdPositions) {
+                return isset($objectIdPositions[$model->getScoutKey()]);
             })->sortBy(function ($model) use ($objectIdPositions) {
                 return $objectIdPositions[$model->getScoutKey()];
             })->values();
@@ -175,11 +169,11 @@ class SolrEngine extends Engine
 
     public function flush($model): void
     {
-        $query = $this->client->setCore(new $model())->createUpdate();
+        $query = $this->client->createUpdate();
         $query->addDeleteQuery('*:*');
         $query->addCommit();
 
-        $this->client->update($query, $this->getEndpointFromConfig($model->searchableAs()));
+        $this->client->update($query, $this->client->endpointFor($model));
     }
 
     public function createIndex($name, array $options = [])
@@ -192,16 +186,16 @@ class SolrEngine extends Engine
         return $this->client->deleteCore($name);
     }
 
-    protected function performSearch(Builder $builder, array $options = []): Result
+    protected function performSearch(Builder $builder, array $options = []): mixed
     {
-        $this->client->setCore($builder->model);
+        $endpoint = $this->client->endpointFor($builder->model);
 
         if ($builder->callback) {
             return call_user_func(
                 $builder->callback,
                 $this->client,
                 $builder->query,
-                $options
+                $options + ['endpoint' => $endpoint]
             );
         }
 
@@ -221,32 +215,81 @@ class SolrEngine extends Engine
 
         $this->events->dispatch(new BeforeSelect($query, $builder));
 
-        $result = $this->client->select($query, $this->getEndpointFromConfig($builder->model->searchableAs()));
+        $result = $this->client->select($query, $endpoint);
 
-        $this->events->dispatch(new AfterSelect($result, $builder->model));
+        $this->events->dispatch(new AfterSelect($result, $builder->model, $builder));
 
         return $result;
     }
 
     protected function filters(Builder $builder): string
     {
-        $filters = collect($builder->wheres)->map(function ($value, $key) {
-            return sprintf('%s:%s', $key, $this->filterValue($value));
+        $filters = collect($this->wheres($builder))->map(function (array $where) {
+            return $this->whereClause(...$where);
         });
 
-        foreach ($builder->whereIns as $key => $values) {
+        foreach ($builder->whereIns as $field => $values) {
             // An empty whereIn can never match, mirroring Eloquent's behaviour.
-            $filters->push(empty($values) ? '-*:*' : sprintf('%s:(%s)', $key, $this->implodeOr($values)));
+            $filters->push(empty($values) ? '-*:*' : sprintf('%s:(%s)', $field, $this->implodeOr($values)));
         }
 
-        // whereNotIn was added in Scout 10.
-        foreach ($builder->whereNotIns ?? [] as $key => $values) {
+        foreach ($builder->whereNotIns as $field => $values) {
             if (!empty($values)) {
-                $filters->push(sprintf('-%s:(%s)', $key, $this->implodeOr($values)));
+                $filters->push(sprintf('-%s:(%s)', $field, $this->implodeOr($values)));
             }
         }
 
         return $filters->values()->implode(' AND ');
+    }
+
+    /**
+     * Scout 10 stores wheres as [field => value]; Scout 11 as a list of
+     * ['field' => ..., 'operator' => ..., 'value' => ...] entries.
+     *
+     * @return list<array{0: string, 1: string, 2: mixed}>
+     */
+    private function wheres(Builder $builder): array
+    {
+        $wheres = [];
+
+        foreach ($builder->wheres as $key => $where) {
+            if (is_array($where) && array_key_exists('field', $where)) {
+                $wheres[] = [(string) $where['field'], (string) ($where['operator'] ?? '='), $where['value'] ?? null];
+                continue;
+            }
+
+            $wheres[] = [(string) $key, '=', $where];
+        }
+
+        return $wheres;
+    }
+
+    private function whereClause(string $field, string $operator, mixed $value): string
+    {
+        if ($value === null) {
+            // Matches documents without (or, negated, with) a value for the field.
+            return match ($operator) {
+                '=', '==' => sprintf('-%s:[* TO *]', $field),
+                '!=', '<>' => sprintf('%s:[* TO *]', $field),
+                default => throw new InvalidArgumentException(
+                    sprintf('Operator "%s" cannot be used with a null value on "%s".', $operator, $field)
+                ),
+            };
+        }
+
+        $value = $this->filterValue($value);
+
+        return match ($operator) {
+            '=', '==' => sprintf('%s:%s', $field, $value),
+            '!=', '<>' => sprintf('-%s:%s', $field, $value),
+            '>' => sprintf('%s:{%s TO *]', $field, $value),
+            '>=' => sprintf('%s:[%s TO *]', $field, $value),
+            '<' => sprintf('%s:[* TO %s}', $field, $value),
+            '<=' => sprintf('%s:[* TO %s]', $field, $value),
+            default => throw new InvalidArgumentException(
+                sprintf('Operator "%s" is not supported by the Solr engine.', $operator)
+            ),
+        };
     }
 
     private function implodeOr(array $values): string
@@ -256,9 +299,9 @@ class SolrEngine extends Engine
 
     /**
      * Quote string filter values so spaces and query syntax are matched literally.
-     * Numbers are left as they are; booleans become Solr's true/false.
+     * Numbers are left as they are, booleans become true/false and dates use Solr's format.
      */
-    private function filterValue($value): string
+    private function filterValue(mixed $value): string
     {
         if (!$this->config->get('scout-solr.select.escape_filter_values', true)) {
             return (string) $value;
@@ -272,7 +315,11 @@ class SolrEngine extends Engine
             return (string) $value;
         }
 
-        return (new Helper())->escapePhrase((string) $value);
+        if ($value instanceof DateTimeInterface) {
+            return $this->helper->escapePhrase((string) $this->helper->formatDate($value));
+        }
+
+        return $this->helper->escapePhrase((string) $value);
     }
 
     /**

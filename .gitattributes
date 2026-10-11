@@ -8,4 +8,5 @@
 /docker-compose.yml export-ignore
 /docs export-ignore
 /README.md export-ignore
+/UPGRADE.md export-ignore
 /phpcs.xml export-ignore

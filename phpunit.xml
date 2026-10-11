@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit backupGlobals="false"
-         backupStaticAttributes="false"
-         beStrictAboutTestsThatDoNotTestAnything="false"
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
          bootstrap="vendor/autoload.php"
          colors="true"
-         convertErrorsToExceptions="true"
-         convertNoticesToExceptions="true"
-         convertWarningsToExceptions="true"
-         processIsolation="false"
-         stopOnFailure="false"
+         cacheDirectory=".phpunit.cache"
+         beStrictAboutTestsThatDoNotTestAnything="false"
 >
     <testsuites>
         <testsuite name="Unit">
@@ -19,6 +15,12 @@
             <directory suffix="Test.php">./tests/Integration</directory>
         </testsuite>
     </testsuites>
+
+    <source>
+        <include>
+            <directory>./src</directory>
+        </include>
+    </source>
 
     <php>
         <env name="APP_ENV" value="testing"/>

@@ -96,10 +96,13 @@ jobs:
             php: '8.4'
             laravel: 13.*
             testbench: 11.*
+          # Solr 10 starts in SolrCloud mode, so this job covers the Collections API path
           - solr: '10'
             php: '8.4'
             laravel: 13.*
             testbench: 11.*
+            cloud: 'true'
+            label: ' / SolrCloud'
           # Oldest supported PHP, Laravel, Scout and Solarium
           - solr: '9'
             php: '8.2'
@@ -144,6 +147,8 @@ jobs:
           composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" ${{ matrix.extra }} --no-interaction --no-update
           composer update --prefer-stable --prefer-dist --no-interaction --no-progress
       - name: Execute integration tests via PHPUnit
+        env:
+          SOLR_CLOUD: ${{ matrix.cloud || 'false' }}
         run: ./vendor/bin/phpunit --testsuite Integration --log-junit junit.xml
       - name: Annotate PHPUnit failures
         if: failure() && hashFiles('junit.xml') != ''

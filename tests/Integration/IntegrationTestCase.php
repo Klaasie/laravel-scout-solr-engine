@@ -58,12 +58,15 @@ abstract class IntegrationTestCase extends TestCase
         $app['config']->set('scout.driver', 'solr');
 
         // Top-level keys set here replace the package defaults, so set them in full.
+        $app['config']->set('scout-solr.cloud', $this->isCloud());
         $app['config']->set('scout-solr.endpoints', [
             'default' => [
                 'host' => getenv('SOLR_HOST') ?: 'localhost',
                 'port' => (int) (getenv('SOLR_PORT') ?: 8983),
                 'path' => '/',
                 'config_set' => '_default',
+                'router_name' => 'compositeId',
+                'num_shards' => 1,
             ],
         ]);
         $app['config']->set('scout-solr.unload', [
@@ -94,18 +97,32 @@ abstract class IntegrationTestCase extends TestCase
         }
     }
 
+    /**
+     * Whether a core (standalone) or collection (SolrCloud) exists.
+     */
     protected function coreExists(string $name): bool
     {
-        $url = sprintf(
-            'http://%s:%d/solr/admin/cores?action=STATUS&wt=json&core=%s',
+        $base = sprintf(
+            'http://%s:%d/solr/admin',
             getenv('SOLR_HOST') ?: 'localhost',
-            (int) (getenv('SOLR_PORT') ?: 8983),
-            urlencode($name)
+            (int) (getenv('SOLR_PORT') ?: 8983)
         );
 
+        if ($this->isCloud()) {
+            $list = json_decode((string) file_get_contents($base . '/collections?action=LIST&wt=json'), true);
+
+            return in_array($name, $list['collections'] ?? [], true);
+        }
+
+        $url = $base . '/cores?action=STATUS&wt=json&core=' . urlencode($name);
         $status = json_decode((string) file_get_contents($url), true);
 
         return !empty($status['status'][$name]);
+    }
+
+    protected function isCloud(): bool
+    {
+        return filter_var(getenv('SOLR_CLOUD'), FILTER_VALIDATE_BOOLEAN);
     }
 
     protected function seedBooks(): void

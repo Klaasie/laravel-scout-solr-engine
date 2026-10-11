@@ -31,7 +31,11 @@ foreach ($xml->xpath('//file') as $fileNode) {
 
     foreach ($fileNode->line as $line) {
         if ((string) $line['type'] === 'stmt' && (int) $line['count'] === 0) {
-            printf("::warning file=%s,line=%d,title=Not covered::This line is not covered by any test.\n", $path, (int) $line['num']);
+            printf(
+                "::warning file=%s,line=%d,title=Not covered::This line is not covered by any test.\n",
+                $path,
+                (int) $line['num']
+            );
         }
     }
 }
@@ -40,8 +44,17 @@ $percentage = $totalStatements ? 100 * $totalCovered / $totalStatements : 100;
 printf("\nLine coverage: %.2f%% (%d/%d), required: %s%%\n", $percentage, $totalCovered, $totalStatements, $minimum);
 
 if ($percentage + 1e-9 < (float) $minimum) {
-    printf("::error title=Coverage::Line coverage is %.2f%%, below the required %s%%.\n", $percentage, $minimum);
+    printf(
+        "::error title=Coverage::Line coverage is %.2f%%, below the required %s%%.\n",
+        $percentage,
+        $minimum
+    );
     exit(1);
 }
 
-printf("::notice title=Coverage::Line coverage is %.2f%% (%d/%d lines).\n", $percentage, $totalCovered, $totalStatements);
+printf(
+    "::notice title=Coverage::Line coverage is %.2f%% (%d/%d lines).\n",
+    $percentage,
+    $totalCovered,
+    $totalStatements
+);

@@ -91,7 +91,7 @@ jobs:
             }
           '
       - name: Execute codesniffer tests
-        run: './vendor/bin/phpcs --standard=./phpcs.xml ./'
+        run: ./vendor/bin/phpcs --standard=./phpcs.xml --report-full --report-checkstyle=./phpcs.xml.report ./ || (cs2pr ./phpcs.xml.report && exit 1)
 
   # Integration tests against a real Solr instance
   solr-integration-tests:

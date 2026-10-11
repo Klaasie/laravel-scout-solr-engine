@@ -45,13 +45,13 @@ class CustomKeyIntegrationTest extends IntegrationTestCase
 
     private function seedIsbnBooks(): void
     {
-        foreach (
-            [
-                ['The Hobbit', 'fantasy', 1937, '978-0547928227'],
-                ['The Fellowship of the Ring', 'fantasy', 1954, '978-0261102217'],
-                ['Dune', 'scifi', 1965, '978-0441013593'],
-            ] as [$title, $genre, $year, $isbn]
-        ) {
+        $books = [
+            ['The Hobbit', 'fantasy', 1937, '978-0547928227'],
+            ['The Fellowship of the Ring', 'fantasy', 1954, '978-0261102217'],
+            ['Dune', 'scifi', 1965, '978-0441013593'],
+        ];
+
+        foreach ($books as [$title, $genre, $year, $isbn]) {
             BookByIsbn::create([
                 'title' => $title,
                 'author' => 'Someone',

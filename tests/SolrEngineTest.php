@@ -5,6 +5,7 @@ namespace Scout\Solr\Tests;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +16,7 @@ use JsonException;
 use Laravel\Scout\Builder;
 use Mockery;
 use Orchestra\Testbench\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Scout\Solr\Client;
 use Scout\Solr\Engines\SolrEngine;
 use Scout\Solr\Events\AfterSelect;
@@ -27,6 +29,8 @@ use Solarium\QueryType\Select\Query\Query as SelectQuery;
 use Solarium\QueryType\Select\Result\Result;
 use Solarium\QueryType\Update\Query\Document;
 use Solarium\QueryType\Select\Result\Document as ResultDocument;
+use Solarium\QueryType\Update\Query\Command\Add as AddCommand;
+use Solarium\QueryType\Update\Query\Command\Commit as CommitCommand;
 use Solarium\QueryType\Update\Query\Query as UpdateQuery;
 
 class SolrEngineTest extends TestCase
@@ -115,6 +119,113 @@ class SolrEngineTest extends TestCase
         $this->create_engine($client)->delete(Collection::make());
 
         $this->addToAssertionCount(1);
+    }
+
+    #[DataProvider('commitModes')]
+    public function test_commit_mode_applies_to_update_delete_and_flush(
+        string $mode,
+        ?bool $softCommit,
+        ?int $commitWithin
+    ): void {
+        Config::set('scout-solr.update.commit', $mode);
+        Config::set('scout-solr.update.commit_within', 2500);
+        $model = new SearchableModel(['id' => 1]);
+
+        foreach (['update', 'delete', 'flush'] as $method) {
+            $client = Mockery::mock(Client::class);
+            $client->shouldReceive('endpointFor')->andReturn(new Endpoint());
+            $client->shouldReceive('createUpdate')->andReturn($update = new UpdateQuery());
+            $client->shouldReceive('update')->once();
+
+            $engine = $this->create_engine($client);
+            $method === 'flush' ? $engine->flush($model) : $engine->{$method}(Collection::make([$model]));
+
+            $commits = array_values(array_filter(
+                $update->getCommands(),
+                fn ($command) => $command instanceof CommitCommand
+            ));
+
+            if ($softCommit === null) {
+                $this->assertCount(0, $commits, "$mode/$method should not add a commit");
+            } else {
+                $this->assertCount(1, $commits, "$mode/$method should add one commit");
+                $this->assertSame($softCommit ?: null, $commits[0]->getSoftCommit());
+            }
+
+            $this->assertSame($commitWithin, $update->getParams()['commitWithin'] ?? null, "$mode/$method");
+        }
+    }
+
+    public static function commitModes(): array
+    {
+        return [
+            'hard' => ['hard', false, null],
+            'soft' => ['soft', true, null],
+            'within' => ['within', null, 2500],
+            'none' => ['none', null, null],
+        ];
+    }
+
+    public function test_unknown_commit_mode_throws(): void
+    {
+        Config::set('scout-solr.update.commit', 'sometimes');
+
+        $client = Mockery::mock(Client::class);
+        $client->shouldReceive('createUpdate')->andReturn(new UpdateQuery());
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unsupported Solr commit mode "sometimes"');
+
+        $this->create_engine($client)->flush(new SearchableModel());
+    }
+
+    public function test_soft_delete_flag_is_added_when_scout_soft_deletes_are_enabled(): void
+    {
+        Config::set('scout.soft_delete', true);
+
+        $this->assertSame(['__soft_deleted' => 1], $this->indexed_metadata_for_trashed_model());
+    }
+
+    public function test_soft_delete_flag_is_not_added_when_scout_soft_deletes_are_disabled(): void
+    {
+        Config::set('scout.soft_delete', false);
+
+        $this->assertSame([], $this->indexed_metadata_for_trashed_model());
+    }
+
+    /**
+     * Indexes a trashed soft-deletable model and returns the document's fields besides id.
+     */
+    private function indexed_metadata_for_trashed_model(): array
+    {
+        $model = new class (['id' => 7]) extends SearchableModel {
+            use SoftDeletes;
+
+            protected $fillable = ['id', 'deleted_at'];
+
+            public function toSearchableArray(): array
+            {
+                return ['title' => 'Dune'];
+            }
+
+            public function scoutMetadata(): array
+            {
+                return $this->scoutMetadata;
+            }
+        };
+        $model->deleted_at = now();
+
+        $client = Mockery::mock(Client::class);
+        $client->shouldReceive('endpointFor')->andReturn(new Endpoint());
+        $client->shouldReceive('createUpdate')->andReturn($update = new UpdateQuery());
+        $client->shouldReceive('update')->once();
+
+        $this->create_engine($client)->update(Collection::make([$model]));
+
+        $add = array_values(array_filter($update->getCommands(), fn ($c) => $c instanceof AddCommand))[0];
+        $fields = $add->getDocuments()[0]->getFields();
+
+        return array_diff_key($fields, ['id' => true, 'title' => true]);
     }
 
     public function test_delete_document_from_core(): void

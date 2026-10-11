@@ -58,6 +58,17 @@ The Solr Engine dispatches several events allowing you to hook into specific poi
 |Scout\Solr\Events\AfterSelect|Contains the Solr `Solarium\QueryType\Select\Result\Result` object and `Model` object. This event allows you to inspect or adjust the raw Solr result before it is mapped to models.|
 
 
+## Testing
+
+`vendor/bin/phpunit` runs the unit tests. The integration tests run against a real Solr instance and are skipped unless `SOLR_HOST` is set:
+
+```bash
+docker run -d -p 8983:8983 solr:9
+SOLR_HOST=localhost vendor/bin/phpunit --testsuite Integration
+```
+
+They create a `scout_books_test` core from Solr's `_default` config set and clear it before each test.
+
 ## Example
 
 This repository provides an example laravel app showcasing the functionality of this package.   

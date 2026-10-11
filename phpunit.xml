@@ -11,8 +11,12 @@
          stopOnFailure="false"
 >
     <testsuites>
-        <testsuite name="Scout Solr">
+        <testsuite name="Unit">
             <directory suffix="Test.php">./tests</directory>
+            <exclude>./tests/Integration</exclude>
+        </testsuite>
+        <testsuite name="Integration">
+            <directory suffix="Test.php">./tests/Integration</directory>
         </testsuite>
     </testsuites>
 

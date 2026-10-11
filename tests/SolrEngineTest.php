@@ -133,6 +133,28 @@ class SolrEngineTest extends TestCase
         $engine->update(Collection::make([$model]));
     }
 
+    public function test_update_with_no_models_does_nothing(): void
+    {
+        $client = Mockery::mock(Client::class);
+        $client->shouldNotReceive('setCore');
+        $client->shouldNotReceive('update');
+
+        $result = $this->create_engine($client)->update(Collection::make());
+
+        $this->assertNull($result);
+    }
+
+    public function test_delete_with_no_models_does_nothing(): void
+    {
+        $client = Mockery::mock(Client::class);
+        $client->shouldNotReceive('setCore');
+        $client->shouldNotReceive('update');
+
+        $this->create_engine($client)->delete(Collection::make());
+
+        $this->addToAssertionCount(1);
+    }
+
     public function test_delete_document_from_core(): void
     {
         $model = new SearchableModel(['id' => 1]);
@@ -284,6 +306,46 @@ class SolrEngineTest extends TestCase
         $this->assertSame('foo:1 AND bar:(2 OR 3)', $select->getFilterQuery('scout')->getQuery());
         $this->assertSame(0, $select->getStart());
         $this->assertSame(20, $select->getRows());
+    }
+
+    public function test_search_sends_where_not_in_as_negated_filter(): void
+    {
+        if (!method_exists(Builder::class, 'whereNotIn')) {
+            $this->markTestSkipped('whereNotIn requires laravel/scout 10 or newer.');
+        }
+
+        $builder = new Builder(new SearchableModel(), 'tolkien');
+        $builder->where('foo', 1)
+            ->whereNotIn('bar', [2, 3]);
+
+        $select = $this->search_with_real_select($builder);
+
+        $this->assertSame('foo:1 AND -bar:(2 OR 3)', $select->getFilterQuery('scout')->getQuery());
+    }
+
+    public function test_search_ignores_empty_where_not_in(): void
+    {
+        if (!method_exists(Builder::class, 'whereNotIn')) {
+            $this->markTestSkipped('whereNotIn requires laravel/scout 10 or newer.');
+        }
+
+        $builder = new Builder(new SearchableModel(), 'tolkien');
+        $builder->where('foo', 1)
+            ->whereNotIn('bar', []);
+
+        $select = $this->search_with_real_select($builder);
+
+        $this->assertSame('foo:1', $select->getFilterQuery('scout')->getQuery());
+    }
+
+    public function test_search_with_empty_where_in_matches_nothing(): void
+    {
+        $builder = new Builder(new SearchableModel(), 'tolkien');
+        $builder->whereIn('bar', []);
+
+        $select = $this->search_with_real_select($builder);
+
+        $this->assertSame('-*:*', $select->getFilterQuery('scout')->getQuery());
     }
 
     public function test_search_keeps_query_text_when_filtering(): void

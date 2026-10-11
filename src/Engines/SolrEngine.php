@@ -19,6 +19,7 @@ use Scout\Solr\Client;
 use Scout\Solr\ClientInterface;
 use Scout\Solr\Events\AfterSelect;
 use Scout\Solr\Events\BeforeSelect;
+use Solarium\Core\Query\Helper;
 use Solarium\Core\Query\Result\ResultInterface;
 use Solarium\QueryType\Select\Result\Document;
 use Solarium\QueryType\Select\Result\Result;
@@ -57,8 +58,9 @@ class SolrEngine extends Engine
                 return;
             }
 
+            // Solr's unique key must hold the scout key, which delete() and map() rely on.
             return $update->createDocument(
-                array_merge($searchableData, $model->scoutMetadata())
+                array_merge($searchableData, $model->scoutMetadata(), ['id' => $model->getScoutKey()])
             );
         })->filter()->values()->all();
 
@@ -229,7 +231,7 @@ class SolrEngine extends Engine
     protected function filters(Builder $builder): string
     {
         $filters = collect($builder->wheres)->map(function ($value, $key) {
-            return sprintf('%s:%s', $key, $value);
+            return sprintf('%s:%s', $key, $this->filterValue($value));
         });
 
         foreach ($builder->whereIns as $key => $values) {
@@ -249,7 +251,28 @@ class SolrEngine extends Engine
 
     private function implodeOr(array $values): string
     {
-        return collect($values)->values()->implode(' OR ');
+        return collect($values)->map(fn ($value) => $this->filterValue($value))->values()->implode(' OR ');
+    }
+
+    /**
+     * Quote string filter values so spaces and query syntax are matched literally.
+     * Numbers are left as they are; booleans become Solr's true/false.
+     */
+    private function filterValue($value): string
+    {
+        if (!$this->config->get('scout-solr.select.escape_filter_values', true)) {
+            return (string) $value;
+        }
+
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+
+        if (is_int($value) || is_float($value)) {
+            return (string) $value;
+        }
+
+        return (new Helper())->escapePhrase((string) $value);
     }
 
     /**

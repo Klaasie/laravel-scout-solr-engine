@@ -35,6 +35,12 @@ Within the config file a core (index) is not provided. The engine will determine
 Alternatively, if a specific model is on a different Solr instance, another configuration can be provided for this model.
 It's important for the configuration key to match the `searchableAs()` of the model.
 
+## Searching and filtering
+
+- The search text is sent to Solr as-is, so Solr query syntax works: `Book::search('title:dune OR author:herbert')`. An empty search matches all documents.
+- `where`, `whereIn` and `whereNotIn` become a Solr filter query. String values are quoted so they match literally; numbers are sent as-is and booleans as `true`/`false`. Set `SOLR_ESCAPE_FILTER_VALUES=false` to send raw values instead, or use the `BeforeSelect` event for complex filters.
+- Documents are stored with Solr's `id` field set to the model's scout key (`getScoutKey()`), so custom scout keys work without adding `id` to `toSearchableArray()`.
+
 ## [Solarium](https://github.com/solariumphp/solarium)
 
 This package uses [solarium/solarium](https://github.com/solariumphp/solarium) to handle requests to the solr instance.

@@ -38,9 +38,9 @@ class SolrEngineTest extends TestCase
         $client->shouldReceive('createUpdate')
             ->andReturn($update = Mockery::mock(UpdateQuery::class));
 
-        $update->shouldReceive('createDocument')->once()->andReturn(
-            $document = new Document(['id' => 1])
-        );
+        $update->shouldReceive('createDocument')->once()
+            ->with(Mockery::on(fn (array $fields) => $fields['id'] === 1))
+            ->andReturn($document = new Document(['id' => 1]));
         $update->shouldReceive('addDocuments')->with([0 => $document]);
         $update->shouldReceive('addCommit');
 
@@ -84,9 +84,9 @@ class SolrEngineTest extends TestCase
         $client->shouldReceive('createUpdate')
             ->andReturn($update = Mockery::mock(UpdateQuery::class));
 
-        $update->shouldReceive('createDocument')->once()->andReturn(
-            $document = new Document(['other_id' => 'custom-key.' . 1])
-        );
+        $update->shouldReceive('createDocument')->once()
+            ->with(Mockery::on(fn (array $fields) => $fields['id'] === 'custom-key.1'))
+            ->andReturn($document = new Document(['id' => 'custom-key.1']));
 
         $update->shouldReceive('addDocuments')->with([0 => $document]);
         $update->shouldReceive('addCommit');
@@ -348,6 +348,43 @@ class SolrEngineTest extends TestCase
         $this->assertSame('-*:*', $select->getFilterQuery('scout')->getQuery());
     }
 
+    public function test_string_filter_values_are_quoted_and_escaped(): void
+    {
+        $builder = new Builder(new SearchableModel(), '');
+        $builder->where('genre', 'science fiction')
+            ->where('title', 'say "hi"')
+            ->whereIn('tag', ['c++', 'a:b']);
+
+        $select = $this->search_with_real_select($builder);
+
+        $this->assertSame(
+            'genre:"science fiction" AND title:"say \\"hi\\"" AND tag:("c++" OR "a:b")',
+            $select->getFilterQuery('scout')->getQuery()
+        );
+    }
+
+    public function test_boolean_filter_values_become_true_or_false(): void
+    {
+        $builder = new Builder(new SearchableModel(), '');
+        $builder->where('active', true)->where('deleted', false);
+
+        $select = $this->search_with_real_select($builder);
+
+        $this->assertSame('active:true AND deleted:false', $select->getFilterQuery('scout')->getQuery());
+    }
+
+    public function test_filter_escaping_can_be_disabled(): void
+    {
+        Config::set('scout-solr.select.escape_filter_values', false);
+
+        $builder = new Builder(new SearchableModel(), '');
+        $builder->where('year', '[1950 TO 1960]');
+
+        $select = $this->search_with_real_select($builder);
+
+        $this->assertSame('year:[1950 TO 1960]', $select->getFilterQuery('scout')->getQuery());
+    }
+
     public function test_search_keeps_query_text_when_filtering(): void
     {
         $builder = new Builder(new SearchableModel(), 'tolkien');
@@ -358,7 +395,7 @@ class SolrEngineTest extends TestCase
 
         $this->assertSame('tolkien', $select->getQuery());
         $this->assertSame(
-            'genre:fantasy AND year:(1954 OR 1955)',
+            'genre:"fantasy" AND year:(1954 OR 1955)',
             $select->getFilterQuery('scout')->getQuery()
         );
     }
@@ -402,7 +439,7 @@ class SolrEngineTest extends TestCase
         });
 
         $this->assertSame('tolkien', $select->getQuery());
-        $this->assertSame('genre:fantasy', $select->getFilterQuery('scout')->getQuery());
+        $this->assertSame('genre:"fantasy"', $select->getFilterQuery('scout')->getQuery());
         $this->assertSame(10, $select->getStart());
         $this->assertSame(5, $select->getRows());
     }

@@ -21,7 +21,7 @@ class Client extends ClientBase implements ClientInterface
         AdapterInterface $adapter,
         EventDispatcherInterface $eventDispatcher,
         Repository $config,
-        array $options = null
+        ?array $options = null
     ) {
         parent::__construct($adapter, $eventDispatcher, $options);
         $this->config = $config;

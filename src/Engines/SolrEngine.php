@@ -145,7 +145,7 @@ class SolrEngine extends Engine
         })->values()->all();
         $objectIdPositions = array_flip($objectIds);
 
-        return $model->getScoutModelsByIds($builder, $objectIds)
+        return $model->queryScoutModelsByIds($builder, $objectIds)
             ->cursor()
             ->filter(function ($model) use ($objectIds) {
                 return in_array($model->getScoutKey(), $objectIds);
@@ -196,10 +196,10 @@ class SolrEngine extends Engine
         }
 
         $query = $this->client->createSelect();
-        if (array_key_exists('filters', $options)) {
-            $query->setQuery($options['filters']);
-        } else {
-            $query->setQuery($builder->query);
+        $query->setQuery((string) $builder->query !== '' ? (string) $builder->query : '*:*');
+
+        if (!empty($options['filters'])) {
+            $query->createFilterQuery('scout')->setQuery($options['filters']);
         }
 
         foreach ($builder->orders as $order) {

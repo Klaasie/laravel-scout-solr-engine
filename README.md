@@ -237,7 +237,7 @@ Register it with `Event::subscribe(ShareSolrQueryTime::class)` in a service prov
 
 ## Testing
 
-`vendor/bin/phpunit` runs the unit tests. The integration tests run against a real Solr instance and are skipped unless `SOLR_HOST` is set:
+`vendor/bin/phpunit` runs the unit tests and `composer phpstan` runs static analysis (PHPStan level 6 with Larastan). The integration tests run against a real Solr instance and are skipped unless `SOLR_HOST` is set:
 
 ```bash
 docker compose up -d

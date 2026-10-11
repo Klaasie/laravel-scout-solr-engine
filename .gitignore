@@ -3,3 +3,5 @@ vendor/
 composer.lock
 .phpunit.result.cache
 example/.phpunit.cachephpcs.xml.report
+clover.xml
+junit.xml

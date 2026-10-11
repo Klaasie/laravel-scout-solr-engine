@@ -8,7 +8,7 @@ This package provides a basic implementation of the Apache Solr search engine wi
 
 | Package | PHP | Laravel | Scout | Solarium | Solr (tested) |
 |---------|-----|---------|-------|----------|---------------|
-| 4.x | 8.2+ | 12, 13 | 10, 11 | 6.3, 7 | 8.11, 9, 10 |
+| 4.x | 8.2+ | 12, 13 | 10, 11 | 6.3, 7 | 8.11, 9, 10 (SolrCloud) |
 | 3.x | 8.0+ | 9 – 12 | 9, 10 | 6 | |
 
 Upgrading from 3.x? See [UPGRADE.md](UPGRADE.md).
@@ -86,6 +86,8 @@ You can initialize your own config file with:
 `php artisan vendor:publish --tag=scout-solr-config`
 
 ### scout:index
+
+Solr 10 starts in SolrCloud mode by default. Set `SOLR_CLOUD=true` so `scout:index` creates collections through the Collections API instead of cores; `SOLR_ROUTER_NAME` and `SOLR_NUM_SHARDS` control how they're created.
 
 By default, Solr doesn't allow indexes (cores) to be created without providing the proper folders and files on the file system first.
 However, if a default config set is set up in the Solr instance this becomes possible through the API.  

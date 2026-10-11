@@ -35,6 +35,7 @@ abstract class IntegrationTestCase extends TestCase
             $table->string('author');
             $table->string('genre');
             $table->integer('year');
+            $table->string('isbn')->nullable();
         });
 
         $this->ensureCoreExists(Book::CORE);

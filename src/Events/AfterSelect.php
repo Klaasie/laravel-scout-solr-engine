@@ -8,6 +8,9 @@ use Solarium\QueryType\Select\Result\Result;
 
 class AfterSelect
 {
+    /**
+     * @param Builder<Model>|null $builder
+     */
     public function __construct(
         public Result $result,
         public Model $model,

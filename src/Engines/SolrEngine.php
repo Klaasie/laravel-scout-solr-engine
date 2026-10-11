@@ -22,9 +22,9 @@ use Scout\Solr\Client;
 use Scout\Solr\ClientInterface;
 use Scout\Solr\Events\AfterSelect;
 use Scout\Solr\Events\BeforeSelect;
+use Solarium\Core\Query\DocumentInterface;
 use Solarium\Core\Query\Helper;
 use Solarium\Core\Query\Result\ResultInterface;
-use Solarium\QueryType\Select\Result\Document;
 use Solarium\QueryType\Select\Result\Result;
 use Solarium\QueryType\Update\Query\Query as UpdateQuery;
 
@@ -54,7 +54,7 @@ class SolrEngine extends Engine
 
         // Scout leaves adding its soft-delete flag to the engine, like its own engines do.
         if ($this->config->get('scout.soft_delete', false) && $this->usesSoftDelete($models->first())) {
-            $models->each->pushSoftDeleteMetadata();
+            $models->each(fn (Model $model) => $model->pushSoftDeleteMetadata());
         }
 
         $update = $this->client->createUpdate();
@@ -86,7 +86,7 @@ class SolrEngine extends Engine
 
         $delete = $this->client->createUpdate();
         $delete->addDeleteByIds(
-            $models->map(fn (Model $model) => $model->getScoutKey())
+            $models->map(fn (Model $model): mixed => $model->getScoutKey())
                 ->values()
                 ->all()
         );
@@ -121,7 +121,7 @@ class SolrEngine extends Engine
     }
 
     /**
-     * @param iterable<Document> $results
+     * @param iterable<DocumentInterface> $results
      * @return SupportCollection<int, mixed>
      */
     public function mapIds($results): SupportCollection
@@ -130,13 +130,13 @@ class SolrEngine extends Engine
     }
 
     /**
-     * @param iterable<Document> $results
+     * @param iterable<DocumentInterface> $results
      * @param string $key
      * @return SupportCollection<int, mixed>
      */
     public function mapIdsFrom($results, $key): SupportCollection
     {
-        return collect($results)->map(static function (Document $document) use ($key) {
+        return collect($results)->map(static function (DocumentInterface $document) use ($key) {
             return $document->getFields()[$key] ?? null;
         })->values();
     }

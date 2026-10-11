@@ -15,7 +15,6 @@ use Solarium\Core\Client\Adapter\AdapterInterface;
 use Solarium\Core\Client\Adapter\ConnectionTimeoutAwareInterface;
 use Solarium\Core\Client\Adapter\Curl;
 use Solarium\Core\Client\Adapter\Http;
-use Solarium\Core\Client\Adapter\TimeoutAwareInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class ScoutSolrServiceProvider extends ServiceProvider
@@ -81,7 +80,7 @@ class ScoutSolrServiceProvider extends ServiceProvider
         };
 
         $timeout = $config->get('scout-solr.http.timeout');
-        if ($adapter instanceof TimeoutAwareInterface && $timeout !== null && $timeout !== '') {
+        if ($timeout !== null && $timeout !== '') {
             $adapter->setTimeout((int) $timeout);
         }
 

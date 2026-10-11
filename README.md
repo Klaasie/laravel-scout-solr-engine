@@ -24,6 +24,10 @@ However, if a default config set is set up in the Solr instance this becomes pos
 The `scout:index` command will only work if the Solr instance is properly configured and the config files has the corresponding name for the config set folder.
 For more information, see [https://solr.apache.org/guide/8_9/config-sets.html#config-sets](https://solr.apache.org/guide/8_9/config-sets.html#config-sets)
 
+With the official `solr` Docker image, the config sets live outside the Solr home, so creating a core from `_default` fails until you copy them in:
+
+`docker exec <container> cp -r /opt/solr/server/solr/configsets /var/solr/data/`
+
 ### Cores (indexes)
 
 Within the config file a core (index) is not provided. The engine will determine which core to connect to using the `searchableAs()` method on the model.
@@ -63,7 +67,8 @@ The Solr Engine dispatches several events allowing you to hook into specific poi
 `vendor/bin/phpunit` runs the unit tests. The integration tests run against a real Solr instance and are skipped unless `SOLR_HOST` is set:
 
 ```bash
-docker run -d -p 8983:8983 solr:9
+docker run -d --name solr -p 8983:8983 solr:9
+docker exec solr cp -r /opt/solr/server/solr/configsets /var/solr/data/
 SOLR_HOST=localhost vendor/bin/phpunit --testsuite Integration
 ```
 

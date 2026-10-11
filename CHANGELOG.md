@@ -80,7 +80,9 @@ _No changelog available_
 ## [0.1.0] - 2021-09-11
 _No changelog available_
 
-[Unreleased]: https://github.com/Klaasie/laravel-scout-solr-engine/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/Klaasie/laravel-scout-solr-engine/compare/4.0.0...HEAD
+[4.0.0]: https://github.com/Klaasie/laravel-scout-solr-engine/compare/3.0.1...4.0.0
+[3.0.1]: https://github.com/Klaasie/laravel-scout-solr-engine/compare/V3.0.0...3.0.1
 [V1.0.0]:https://github.com/Klaasie/laravel-scout-solr-engine/compare/0.6.0...v1.0.0
 [0.6.0]: https://github.com/Klaasie/laravel-scout-solr-engine/compare/0.5.1...0.6.0
 [0.5.1]: https://github.com/Klaasie/laravel-scout-solr-engine/compare/0.5.0...0.5.1

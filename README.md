@@ -113,7 +113,7 @@ SOLR_COMMIT_WITHIN=1000   # milliseconds, used by "within"
 
 ### Soft deletes
 
-Scout's `soft_delete` option works as usual: soft-deleted models stay in the index with a `__soft_deleted` flag, are excluded from searches by default, and can be included with `withTrashed()` or `onlyTrashed()`.
+Scout's `soft_delete` option works as usual: soft-deleted models stay in the index with a `__soft_deleted` flag, are excluded from searches by default, and can be included with `withTrashed()` or `onlyTrashed()`. With your own schema, define `__soft_deleted` as an integer field; Solr's schemaless mode creates it automatically.
 
 ### HTTP adapter and timeouts
 

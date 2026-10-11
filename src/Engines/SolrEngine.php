@@ -12,6 +12,7 @@ use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\LazyCollection;
 use InvalidArgumentException;
@@ -46,6 +47,11 @@ class SolrEngine extends Engine
     {
         if ($models->isEmpty()) {
             return null;
+        }
+
+        // Scout leaves adding its soft-delete flag to the engine, like its own engines do.
+        if ($this->config->get('scout.soft_delete', false) && $this->usesSoftDelete($models->first())) {
+            $models->each->pushSoftDeleteMetadata();
         }
 
         $update = $this->client->createUpdate();
@@ -185,6 +191,11 @@ class SolrEngine extends Engine
     public function deleteIndex($name)
     {
         return $this->client->deleteCore($name);
+    }
+
+    private function usesSoftDelete(Model $model): bool
+    {
+        return in_array(SoftDeletes::class, class_uses_recursive($model), true);
     }
 
     /**

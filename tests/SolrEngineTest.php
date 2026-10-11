@@ -5,6 +5,7 @@ namespace Scout\Solr\Tests;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -28,6 +29,7 @@ use Solarium\QueryType\Select\Query\Query as SelectQuery;
 use Solarium\QueryType\Select\Result\Result;
 use Solarium\QueryType\Update\Query\Document;
 use Solarium\QueryType\Select\Result\Document as ResultDocument;
+use Solarium\QueryType\Update\Query\Command\Add as AddCommand;
 use Solarium\QueryType\Update\Query\Command\Commit as CommitCommand;
 use Solarium\QueryType\Update\Query\Query as UpdateQuery;
 
@@ -175,6 +177,55 @@ class SolrEngineTest extends TestCase
         $this->expectExceptionMessage('Unsupported Solr commit mode "sometimes"');
 
         $this->create_engine($client)->flush(new SearchableModel());
+    }
+
+    public function test_soft_delete_flag_is_added_when_scout_soft_deletes_are_enabled(): void
+    {
+        Config::set('scout.soft_delete', true);
+
+        $this->assertSame(['__soft_deleted' => 1], $this->indexed_metadata_for_trashed_model());
+    }
+
+    public function test_soft_delete_flag_is_not_added_when_scout_soft_deletes_are_disabled(): void
+    {
+        Config::set('scout.soft_delete', false);
+
+        $this->assertSame([], $this->indexed_metadata_for_trashed_model());
+    }
+
+    /**
+     * Indexes a trashed soft-deletable model and returns the document's fields besides id.
+     */
+    private function indexed_metadata_for_trashed_model(): array
+    {
+        $model = new class (['id' => 7]) extends SearchableModel {
+            use SoftDeletes;
+
+            protected $fillable = ['id', 'deleted_at'];
+
+            public function toSearchableArray(): array
+            {
+                return ['title' => 'Dune'];
+            }
+
+            public function scoutMetadata(): array
+            {
+                return $this->scoutMetadata;
+            }
+        };
+        $model->deleted_at = now();
+
+        $client = Mockery::mock(Client::class);
+        $client->shouldReceive('endpointFor')->andReturn(new Endpoint());
+        $client->shouldReceive('createUpdate')->andReturn($update = new UpdateQuery());
+        $client->shouldReceive('update')->once();
+
+        $this->create_engine($client)->update(Collection::make([$model]));
+
+        $add = array_values(array_filter($update->getCommands(), fn ($c) => $c instanceof AddCommand))[0];
+        $fields = $add->getDocuments()[0]->getFields();
+
+        return array_diff_key($fields, ['id' => true, 'title' => true]);
     }
 
     public function test_delete_document_from_core(): void

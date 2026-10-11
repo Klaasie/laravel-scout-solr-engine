@@ -5,8 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed (breaking)
+- String values passed to `where`, `whereIn` and `whereNotIn` are now quoted, so they match literally (e.g. `science fiction`, `c++`). If you relied on passing raw Solr syntax such as `[1950 TO 1960]` as a value, set `SOLR_ESCAPE_FILTER_VALUES=false` or build the filter in a `BeforeSelect` listener.
+- Boolean filter values are now sent as `true`/`false` instead of `1`/empty.
+- Solr's `id` field is now always set to the model's scout key. Models with a custom `getScoutKey()` were previously indexed under a different id than the one used to find and delete them; re-import those models (`scout:flush` then `scout:import`).
+
 ### Added
 - `whereNotIn` support (Scout 10+), sent as a negated filter query.
+- `scout-solr.select.escape_filter_values` config option (`SOLR_ESCAPE_FILTER_VALUES`).
 
 ### Fixed
 - An unsupported SolrCloud `router_name` now throws `InvalidRouterNameSupplied` instead of being silently ignored.

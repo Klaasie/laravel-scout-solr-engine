@@ -43,6 +43,13 @@ return [
     */
     'select' => [
         'limit' => env('SOLR_SELECT_DEFAULT_LIMIT', 10),
+
+        /*
+         * String values passed to where(), whereIn() and whereNotIn() are quoted so they
+         * match literally, including spaces and characters like + - : ( ). Set this to
+         * false to send them as raw Solr query syntax instead (the pre-4.0 behaviour).
+         */
+        'escape_filter_values' => env('SOLR_ESCAPE_FILTER_VALUES', true),
     ],
 
     /*

@@ -311,6 +311,16 @@ class SolrEngineTest extends TestCase
         $this->assertCount(0, $select->getFilterQueries());
     }
 
+    public function test_default_limit_from_env_string_is_cast_to_int(): void
+    {
+        Config::set('scout-solr.select.limit', '50');
+        $builder = new Builder(new SearchableModel(), 'tolkien');
+
+        $select = $this->search_with_real_select($builder);
+
+        $this->assertSame(50, $select->getRows());
+    }
+
     public function test_empty_search_matches_all_documents(): void
     {
         $builder = new Builder(new SearchableModel(), '');

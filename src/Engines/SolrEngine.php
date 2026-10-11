@@ -207,7 +207,7 @@ class SolrEngine extends Engine
         }
 
         $query->setStart($options['offset'] ?? 0)
-            ->setRows($options['limit'] ?? $this->config->get('scout-solr.select.limit'));
+            ->setRows((int) ($options['limit'] ?? $this->config->get('scout-solr.select.limit', 10)));
 
         $this->events->dispatch(new BeforeSelect($query, $builder));
 

@@ -48,9 +48,10 @@ class ScoutSolrServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $this->app->make(EngineManager::class)->extend('solr', function () {
-            return $this->app->make(SolrEngine::class);
-        });
+        // Laravel 13 binds custom driver callbacks to the manager, so `$this` can't be
+        // relied on inside the callback; capture the container instead.
+        $app = $this->app;
+        $app->make(EngineManager::class)->extend('solr', fn () => $app->make(SolrEngine::class));
 
         $this->publishes([
             __DIR__ . '/../config/scout-solr.php' => config_path('scout-solr.php'),

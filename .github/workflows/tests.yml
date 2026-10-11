@@ -81,6 +81,43 @@ jobs:
       - name: Execute codesniffer tests
         run: ./vendor/bin/phpcs --standard=./phpcs.xml --report-full --report-checkstyle=./phpcs.xml.report ./ || (cs2pr ./phpcs.xml.report && exit 1)
 
+  coverage-report:
+    runs-on: ubuntu-latest
+    name: Coverage report
+    env:
+      SOLR_HOST: localhost
+      SOLR_PORT: 8983
+    steps:
+      - uses: actions/checkout@v7
+      - name: Start Solr
+        env:
+          SOLR_VERSION: '9'
+        run: |
+          docker compose up -d solr
+          for i in $(seq 1 60); do
+            curl -sf "http://localhost:8983/solr/admin/info/system?wt=json" > /dev/null && exit 0
+            sleep 2
+          done
+          exit 1
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, dom, fileinfo, pdo_sqlite, curl
+          coverage: pcov
+      - name: Install Composer dependencies
+        run: composer update --prefer-stable --prefer-dist --no-interaction --no-progress
+      - name: Coverage, unit tests only
+        run: ./vendor/bin/phpunit --testsuite Unit --coverage-text=unit.txt --colors=never
+      - name: Coverage, unit and integration tests
+        run: ./vendor/bin/phpunit --coverage-text=all.txt --colors=never
+      - name: Report
+        if: always()
+        run: |
+          for f in unit all; do
+            [ -f $f.txt ] && awk 'BEGIN{ORS="%0A"} {print}' $f.txt | sed "s/^/::notice title=coverage-$f::/"
+          done
+
   # Static analysis (PHPStan with Larastan)
   phpstan:
     runs-on: ubuntu-latest

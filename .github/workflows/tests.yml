@@ -119,18 +119,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Start Solr
+        env:
+          SOLR_VERSION: ${{ matrix.solr }}
         run: |
-          docker run -d --name solr -p 8983:8983 solr:${{ matrix.solr }}
+          docker compose up -d solr
           for i in $(seq 1 60); do
-            if curl -sf "http://localhost:8983/solr/admin/info/system?wt=json" > /dev/null; then
-              # The official image keeps config sets outside the Solr home; copy them
-              # in so cores can be created from _default through the API.
-              docker exec solr cp -r /opt/solr/server/solr/configsets /var/solr/data/
-              exit 0
-            fi
+            curl -sf "http://localhost:8983/solr/admin/info/system?wt=json" > /dev/null && exit 0
             sleep 2
           done
-          docker logs solr
+          docker compose logs solr
           exit 1
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -166,4 +163,4 @@ jobs:
           '
       - name: Solr logs on failure
         if: failure()
-        run: docker logs solr 2>&1 | grep -E "ERROR|Exception" | tail -20 | sed 's/^/::warning title=solr::/'
+        run: docker compose logs --no-log-prefix solr 2>&1 | grep -E "ERROR|Exception" | tail -20 | sed 's/^/::warning title=solr::/'

@@ -1,0 +1,17 @@
+# A local Solr for trying the package and running the integration tests:
+#
+#   docker compose up -d
+#   SOLR_HOST=localhost vendor/bin/phpunit --testsuite Integration
+#
+# SOLR_VERSION picks the image tag (default 9).
+services:
+  solr:
+    image: solr:${SOLR_VERSION:-9}
+    ports:
+      - '${SOLR_PORT:-8983}:8983'
+    volumes:
+      - ./docker/solr/copy-configsets.sh:/docker-entrypoint-initdb.d/copy-configsets.sh:ro
+      - solr-data:/var/solr
+
+volumes:
+  solr-data:

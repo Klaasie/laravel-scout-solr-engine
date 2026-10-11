@@ -10,7 +10,68 @@ This package provides a basic implementation of the Apache Solr search engine wi
 
 `composer require klaasie/scout-solr-engine`
 
-## config
+Then tell Scout to use the engine in your `.env`:
+
+```dotenv
+SCOUT_DRIVER=solr
+SOLR_HOST=localhost
+SOLR_PORT=8983
+```
+
+### Running Solr locally
+
+This repository includes a `docker-compose.yml` that starts Solr with the config sets in place, so `scout:index` can create cores straight away. Copy it (and the `docker/` folder) into your project, or run it from a clone of this repository:
+
+```bash
+docker compose up -d
+php artisan scout:index books
+```
+
+## Usage
+
+Add Scout's `Searchable` trait to a model. `searchableAs()` is the name of the Solr core, and `toSearchableArray()` is the document that gets indexed:
+
+```php
+use Illuminate\Database\Eloquent\Model;
+use Laravel\Scout\Searchable;
+
+class Book extends Model
+{
+    use Searchable;
+
+    public function searchableAs(): string
+    {
+        return 'books';
+    }
+
+    public function toSearchableArray(): array
+    {
+        // Field names here use the dynamic field suffixes of Solr's _default
+        // config set (*_t text, *_s exact string, *_i integer). With your own
+        // schema, use whatever fields it defines.
+        return [
+            'title_t' => $this->title,
+            'author_t' => $this->author,
+            'genre_s' => $this->genre,
+            'year_i' => $this->year,
+        ];
+    }
+}
+```
+
+Saving, updating and deleting models keeps the core in sync, and searching works as in any Scout engine:
+
+```php
+Book::search('author_t:tolkien')
+    ->where('genre_s', 'fantasy')
+    ->whereIn('year_i', [1937, 1954])
+    ->orderBy('year_i', 'desc')
+    ->paginate(15);
+```
+
+The integration tests in [`tests/Integration`](tests/Integration) are working examples of indexing, filtering, sorting, pagination and custom scout keys against a real Solr.
+
+## Configuration
 
 This package provides a config file that can be modified using .env variables.  
 You can initialize your own config file with: 
@@ -24,7 +85,7 @@ However, if a default config set is set up in the Solr instance this becomes pos
 The `scout:index` command will only work if the Solr instance is properly configured and the config files has the corresponding name for the config set folder.
 For more information, see [https://solr.apache.org/guide/8_9/config-sets.html#config-sets](https://solr.apache.org/guide/8_9/config-sets.html#config-sets)
 
-With the official `solr` Docker image, the config sets live outside the Solr home, so creating a core from `_default` fails until you copy them in:
+With the official `solr` Docker image, the config sets live outside the Solr home, so creating a core from `_default` fails until you copy them in. The included `docker-compose.yml` does this for you; with your own container, run:
 
 `docker exec <container> cp -r /opt/solr/server/solr/configsets /var/solr/data/`
 
@@ -33,7 +94,23 @@ With the official `solr` Docker image, the config sets live outside the Solr hom
 Within the config file a core (index) is not provided. The engine will determine which core to connect to using the `searchableAs()` method on the model.
 
 Alternatively, if a specific model is on a different Solr instance, another configuration can be provided for this model.
-It's important for the configuration key to match the `searchableAs()` of the model.
+It's important for the configuration key to match the `searchableAs()` of the model. In your published `config/scout-solr.php`:
+
+```php
+'endpoints' => [
+    'default' => [
+        // ...
+    ],
+    // Used for models whose searchableAs() returns 'books'
+    'books' => [
+        'host' => env('SOLR_BOOKS_HOST', 'solr2'),
+        'port' => env('SOLR_BOOKS_PORT', 8983),
+        'path' => '/',
+        'core' => 'books',
+        'config_set' => '_default',
+    ],
+],
+```
 
 ## Searching and filtering
 
@@ -67,20 +144,41 @@ The Solr Engine dispatches several events allowing you to hook into specific poi
 |Scout\Solr\Events\BeforeSelect|Contains the Solr `Solarium\QueryType\Select\Query\Query` object and Scout `Builder` object. This event allows you to create complex queries using the Solarium package.|
 |Scout\Solr\Events\AfterSelect|Contains the Solr `Solarium\QueryType\Select\Result\Result` object and `Model` object. This event allows you to inspect or adjust the raw Solr result before it is mapped to models.|
 
+For example, a subscriber that shares Solr's query time with every view:
+
+```php
+use Illuminate\Contracts\Events\Dispatcher;
+use Illuminate\Support\Facades\View;
+use Scout\Solr\Events\AfterSelect;
+use Scout\Solr\Events\BeforeSelect;
+
+class ShareSolrQueryTime
+{
+    public function subscribe(Dispatcher $events): void
+    {
+        // Solr only reports the query time when the response header is included.
+        $events->listen(BeforeSelect::class, fn (BeforeSelect $event) => $event->query->setOmitHeader(false));
+
+        $events->listen(AfterSelect::class, fn (AfterSelect $event) => View::share(
+            'solrQueryTime',
+            $event->result->getQueryTime()
+        ));
+    }
+}
+```
+
+Register it with `Event::subscribe(ShareSolrQueryTime::class)` in a service provider.
+
 
 ## Testing
 
 `vendor/bin/phpunit` runs the unit tests. The integration tests run against a real Solr instance and are skipped unless `SOLR_HOST` is set:
 
 ```bash
-docker run -d --name solr -p 8983:8983 solr:9
-docker exec solr cp -r /opt/solr/server/solr/configsets /var/solr/data/
+docker compose up -d
 SOLR_HOST=localhost vendor/bin/phpunit --testsuite Integration
 ```
 
+Set `SOLR_VERSION` to test against another Solr image tag, e.g. `SOLR_VERSION=8.11 docker compose up -d`.
+
 They create a `scout_books_test` core from Solr's `_default` config set and clear it before each test.
-
-## Example
-
-This repository provides an example laravel app showcasing the functionality of this package.   
-Please refer to the [README.md](example/README.md) of the example app for information on how to get it started.

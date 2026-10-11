@@ -4,8 +4,8 @@
 /composer.lock export-ignore
 /phpunit.xml export-ignore
 /tests export-ignore
-/example export-ignore
+/docker export-ignore
+/docker-compose.yml export-ignore
 /docs export-ignore
 /README.md export-ignore
-/phpunit.xml export-ignore
 /phpcs.xml export-ignore

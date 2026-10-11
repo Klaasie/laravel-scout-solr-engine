@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Solr's `id` field is now always set to the model's scout key. Models with a custom `getScoutKey()` were previously indexed under a different id than the one used to find and delete them; re-import those models (`scout:flush` then `scout:import`).
 
 ### Added
+- `docker-compose.yml` that starts a local Solr ready for `scout:index`, used by the integration tests in CI.
+- README usage section: model setup, a second Solr instance, and an events example.
 - `whereNotIn` support (Scout 10+), sent as a negated filter query.
 - `scout-solr.select.escape_filter_values` config option (`SOLR_ESCAPE_FILTER_VALUES`).
 
@@ -19,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `update()` and `delete()` no longer fail when given an empty collection.
 - A `whereIn` with an empty array no longer produces invalid Solr syntax; it matches nothing, like Eloquent.
 - README: the second events-table row now correctly names `AfterSelect`.
+
+### Removed
+- The bundled Laravel 8 example app (it was not part of the Composer package). Its examples now live in the README.
 
 ## [3.0.1] - 2026-10-11
 ### Fixed

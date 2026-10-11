@@ -15,8 +15,7 @@ use Solarium\Exception\HttpException;
 /**
  * Runs against a real Solr instance. Skipped unless SOLR_HOST is set, e.g.:
  *
- *   docker run -d --name solr -p 8983:8983 solr:9
- *   docker exec solr cp -r /opt/solr/server/solr/configsets /var/solr/data/
+ *   docker compose up -d
  *   SOLR_HOST=localhost vendor/bin/phpunit --testsuite Integration
  */
 abstract class IntegrationTestCase extends TestCase

@@ -22,9 +22,9 @@ use Scout\Solr\Client;
 use Scout\Solr\ClientInterface;
 use Scout\Solr\Events\AfterSelect;
 use Scout\Solr\Events\BeforeSelect;
+use Solarium\Core\Query\DocumentInterface;
 use Solarium\Core\Query\Helper;
 use Solarium\Core\Query\Result\ResultInterface;
-use Solarium\QueryType\Select\Result\Document;
 use Solarium\QueryType\Select\Result\Result;
 use Solarium\QueryType\Update\Query\Query as UpdateQuery;
 
@@ -43,6 +43,9 @@ class SolrEngine extends Engine
         $this->helper = new Helper();
     }
 
+    /**
+     * @param Collection<int, Model> $models
+     */
     public function update($models): ?ResultInterface
     {
         if ($models->isEmpty()) {
@@ -51,7 +54,7 @@ class SolrEngine extends Engine
 
         // Scout leaves adding its soft-delete flag to the engine, like its own engines do.
         if ($this->config->get('scout.soft_delete', false) && $this->usesSoftDelete($models->first())) {
-            $models->each->pushSoftDeleteMetadata();
+            $models->each(fn (Model $model) => $model->pushSoftDeleteMetadata());
         }
 
         $update = $this->client->createUpdate();
@@ -72,6 +75,9 @@ class SolrEngine extends Engine
         return $this->client->update($update, $this->client->endpointFor($models->first()));
     }
 
+    /**
+     * @param Collection<int, Model> $models
+     */
     public function delete($models): void
     {
         if ($models->isEmpty()) {
@@ -80,7 +86,7 @@ class SolrEngine extends Engine
 
         $delete = $this->client->createUpdate();
         $delete->addDeleteByIds(
-            $models->map->getScoutKey()
+            $models->map(fn (Model $model): mixed => $model->getScoutKey())
                 ->values()
                 ->all()
         );
@@ -89,6 +95,9 @@ class SolrEngine extends Engine
         $this->client->update($delete, $this->client->endpointFor($models->first()));
     }
 
+    /**
+     * @param Builder<Model> $builder
+     */
     public function search(Builder $builder): mixed
     {
         return $this->performSearch($builder, array_filter([
@@ -97,6 +106,11 @@ class SolrEngine extends Engine
         ]));
     }
 
+    /**
+     * @param Builder<Model> $builder
+     * @param int $perPage
+     * @param int $page
+     */
     public function paginate(Builder $builder, $perPage, $page): mixed
     {
         return $this->performSearch($builder, array_filter([
@@ -106,23 +120,32 @@ class SolrEngine extends Engine
         ]));
     }
 
+    /**
+     * @param iterable<DocumentInterface> $results
+     * @return SupportCollection<int, mixed>
+     */
     public function mapIds($results): SupportCollection
     {
         return $this->mapIdsFrom($results, 'id');
     }
 
+    /**
+     * @param iterable<DocumentInterface> $results
+     * @param string $key
+     * @return SupportCollection<int, mixed>
+     */
     public function mapIdsFrom($results, $key): SupportCollection
     {
-        return collect($results)->map(static function (Document $document) use ($key) {
+        return collect($results)->map(static function (DocumentInterface $document) use ($key) {
             return $document->getFields()[$key] ?? null;
         })->values();
     }
 
     /**
-     * @param Builder $builder
+     * @param Builder<Model> $builder
      * @param Result $results
      * @param Model $model
-     * @return Collection
+     * @return Collection<int, Model>
      */
     public function map(Builder $builder, $results, $model)
     {
@@ -142,10 +165,10 @@ class SolrEngine extends Engine
     }
 
     /**
-     * @param Builder $builder
+     * @param Builder<Model> $builder
      * @param Result $results
      * @param Model $model
-     * @return LazyCollection
+     * @return LazyCollection<int, Model>
      */
     public function lazyMap(Builder $builder, $results, $model)
     {
@@ -174,6 +197,9 @@ class SolrEngine extends Engine
         return $results->getNumFound();
     }
 
+    /**
+     * @param Model $model
+     */
     public function flush($model): void
     {
         $query = $this->client->createUpdate();
@@ -183,12 +209,19 @@ class SolrEngine extends Engine
         $this->client->update($query, $this->client->endpointFor($model));
     }
 
-    public function createIndex($name, array $options = [])
+    /**
+     * @param string $name
+     * @param array<string, mixed> $options
+     */
+    public function createIndex($name, array $options = []): ResultInterface
     {
         return $this->client->createCore($name);
     }
 
-    public function deleteIndex($name)
+    /**
+     * @param string $name
+     */
+    public function deleteIndex($name): ResultInterface
     {
         return $this->client->deleteCore($name);
     }
@@ -223,6 +256,10 @@ class SolrEngine extends Engine
         };
     }
 
+    /**
+     * @param Builder<Model> $builder
+     * @param array<string, mixed> $options
+     */
     protected function performSearch(Builder $builder, array $options = []): mixed
     {
         $endpoint = $this->client->endpointFor($builder->model);
@@ -259,6 +296,9 @@ class SolrEngine extends Engine
         return $result;
     }
 
+    /**
+     * @param Builder<Model> $builder
+     */
     protected function filters(Builder $builder): string
     {
         $filters = collect($this->wheres($builder))->map(function (array $where) {
@@ -283,6 +323,7 @@ class SolrEngine extends Engine
      * Scout 10 stores wheres as [field => value]; Scout 11 as a list of
      * ['field' => ..., 'operator' => ..., 'value' => ...] entries.
      *
+     * @param Builder<Model> $builder
      * @return list<array{0: string, 1: string, 2: mixed}>
      */
     private function wheres(Builder $builder): array
@@ -329,6 +370,9 @@ class SolrEngine extends Engine
         };
     }
 
+    /**
+     * @param array<mixed> $values
+     */
     private function implodeOr(array $values): string
     {
         return collect($values)->map(fn ($value) => $this->filterValue($value))->values()->implode(' OR ');
@@ -363,7 +407,7 @@ class SolrEngine extends Engine
      * Dynamically call the Solr client instance.
      *
      * @param  string  $method
-     * @param  array  $parameters
+     * @param  array<mixed>  $parameters
      * @return mixed
      */
     public function __call(string $method, array $parameters)

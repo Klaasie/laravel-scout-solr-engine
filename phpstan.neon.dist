@@ -1,0 +1,14 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 6
+    # config/ is left out: Larastan flags its env() calls, which are fine in a
+    # package's config file because Laravel merges it into the app's config.
+    paths:
+        - src
+    ignoreErrors:
+        # Scout's Searchable trait adds these to models; PHPStan only sees the Model type.
+        -
+            message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model::(searchableAs|toSearchableArray|scoutMetadata|getScoutKey|pushSoftDeleteMetadata|getScoutModelsByIds|queryScoutModelsByIds)\(\)\.$#'
+            identifier: method.notFound

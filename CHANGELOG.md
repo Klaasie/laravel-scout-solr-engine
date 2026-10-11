@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- `whereNotIn` support (Scout 10+), sent as a negated filter query.
+
+### Fixed
+- An unsupported SolrCloud `router_name` now throws `InvalidRouterNameSupplied` instead of being silently ignored.
+- `update()` and `delete()` no longer fail when given an empty collection.
+- A `whereIn` with an empty array no longer produces invalid Solr syntax; it matches nothing, like Eloquent.
+- README: the second events-table row now correctly names `AfterSelect`.
+
+## [3.0.1] - 2026-10-11
 ### Fixed
 - Search text is no longer dropped when `where`/`whereIn` filters are used; filters are now sent as a Solr filter query (`fq`).
 - An empty search now matches all documents (`*:*`).

@@ -55,7 +55,7 @@ The Solr Engine dispatches several events allowing you to hook into specific poi
 | Event | Usage |
 |---------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
 |Scout\Solr\Events\BeforeSelect|Contains the Solr `Solarium\QueryType\Select\Query\Query` object and Scout `Builder` object. This event allows you to create complex queries using the Solarium package.|
-|Scout\Solr\Events\BeforeSelect|Contains the Solr `Solarium\QueryType\Select\Result\Result` object and `Model` object. This event allows you to create complex queries using the Solarium package.|
+|Scout\Solr\Events\AfterSelect|Contains the Solr `Solarium\QueryType\Select\Result\Result` object and `Model` object. This event allows you to inspect or adjust the raw Solr result before it is mapped to models.|
 
 
 ## Example

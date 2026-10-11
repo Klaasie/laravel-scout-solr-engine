@@ -60,7 +60,7 @@ class Client extends ClientBase implements ClientInterface
                 ClientInterface::ROUTER_NAME_IMPLICIT => $action->setShards(
                     $this->config->get('scout-solr.endpoints.' . $key . '.shards')
                 ),
-                default => InvalidRouterNameSupplied::forRouterName($routerName),
+                default => throw InvalidRouterNameSupplied::forRouterName((string) $routerName),
             };
 
             $collectionAdminQuery->setAction($action);

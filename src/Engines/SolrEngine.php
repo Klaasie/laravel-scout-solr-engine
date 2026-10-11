@@ -42,8 +42,12 @@ class SolrEngine extends Engine
         $this->events = $events;
     }
 
-    public function update($models): ResultInterface
+    public function update($models): ?ResultInterface
     {
+        if ($models->isEmpty()) {
+            return null;
+        }
+
         $this->client->setCore($models->first());
 
         $update = $this->client->createUpdate();
@@ -66,6 +70,10 @@ class SolrEngine extends Engine
 
     public function delete($models): void
     {
+        if ($models->isEmpty()) {
+            return;
+        }
+
         $this->client->setCore($models->first());
 
         $delete = $this->client->createUpdate();
@@ -225,12 +233,23 @@ class SolrEngine extends Engine
         });
 
         foreach ($builder->whereIns as $key => $values) {
-            $filters->push(sprintf('%s:(%s)', $key, collect($values)->map(function ($value) {
-                return $value;
-            })->values()->implode(' OR ')));
+            // An empty whereIn can never match, mirroring Eloquent's behaviour.
+            $filters->push(empty($values) ? '-*:*' : sprintf('%s:(%s)', $key, $this->implodeOr($values)));
+        }
+
+        // whereNotIn was added in Scout 10.
+        foreach ($builder->whereNotIns ?? [] as $key => $values) {
+            if (!empty($values)) {
+                $filters->push(sprintf('-%s:(%s)', $key, $this->implodeOr($values)));
+            }
         }
 
         return $filters->values()->implode(' AND ');
+    }
+
+    private function implodeOr(array $values): string
+    {
+        return collect($values)->values()->implode(' OR ');
     }
 
     /**

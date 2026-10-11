@@ -33,6 +33,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Solr Update
+    |--------------------------------------------------------------------------
+    |
+    | How indexed changes are made visible to searches:
+    | - "hard": commit with every update (the default; simplest, slowest for big imports)
+    | - "soft": soft commit with every update (visible immediately, flushed to disk later)
+    | - "within": let Solr commit within `commit_within` milliseconds; fastest for imports
+    | - "none": rely entirely on the autoCommit settings in your solrconfig.xml
+    |
+    */
+    'update' => [
+        'commit' => env('SOLR_COMMIT', 'hard'),
+        'commit_within' => env('SOLR_COMMIT_WITHIN', 1000),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Solr Select
     |--------------------------------------------------------------------------
     |

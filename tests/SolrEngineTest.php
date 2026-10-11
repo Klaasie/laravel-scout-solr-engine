@@ -15,6 +15,7 @@ use JsonException;
 use Laravel\Scout\Builder;
 use Mockery;
 use Orchestra\Testbench\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Scout\Solr\Client;
 use Scout\Solr\Engines\SolrEngine;
 use Scout\Solr\Events\AfterSelect;
@@ -27,6 +28,7 @@ use Solarium\QueryType\Select\Query\Query as SelectQuery;
 use Solarium\QueryType\Select\Result\Result;
 use Solarium\QueryType\Update\Query\Document;
 use Solarium\QueryType\Select\Result\Document as ResultDocument;
+use Solarium\QueryType\Update\Query\Command\Commit as CommitCommand;
 use Solarium\QueryType\Update\Query\Query as UpdateQuery;
 
 class SolrEngineTest extends TestCase
@@ -115,6 +117,64 @@ class SolrEngineTest extends TestCase
         $this->create_engine($client)->delete(Collection::make());
 
         $this->addToAssertionCount(1);
+    }
+
+    #[DataProvider('commitModes')]
+    public function test_commit_mode_applies_to_update_delete_and_flush(
+        string $mode,
+        ?bool $softCommit,
+        ?int $commitWithin
+    ): void {
+        Config::set('scout-solr.update.commit', $mode);
+        Config::set('scout-solr.update.commit_within', 2500);
+        $model = new SearchableModel(['id' => 1]);
+
+        foreach (['update', 'delete', 'flush'] as $method) {
+            $client = Mockery::mock(Client::class);
+            $client->shouldReceive('endpointFor')->andReturn(new Endpoint());
+            $client->shouldReceive('createUpdate')->andReturn($update = new UpdateQuery());
+            $client->shouldReceive('update')->once();
+
+            $engine = $this->create_engine($client);
+            $method === 'flush' ? $engine->flush($model) : $engine->{$method}(Collection::make([$model]));
+
+            $commits = array_values(array_filter(
+                $update->getCommands(),
+                fn ($command) => $command instanceof CommitCommand
+            ));
+
+            if ($softCommit === null) {
+                $this->assertCount(0, $commits, "$mode/$method should not add a commit");
+            } else {
+                $this->assertCount(1, $commits, "$mode/$method should add one commit");
+                $this->assertSame($softCommit ?: null, $commits[0]->getSoftCommit());
+            }
+
+            $this->assertSame($commitWithin, $update->getParams()['commitWithin'] ?? null, "$mode/$method");
+        }
+    }
+
+    public static function commitModes(): array
+    {
+        return [
+            'hard' => ['hard', false, null],
+            'soft' => ['soft', true, null],
+            'within' => ['within', null, 2500],
+            'none' => ['none', null, null],
+        ];
+    }
+
+    public function test_unknown_commit_mode_throws(): void
+    {
+        Config::set('scout-solr.update.commit', 'sometimes');
+
+        $client = Mockery::mock(Client::class);
+        $client->shouldReceive('createUpdate')->andReturn(new UpdateQuery());
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unsupported Solr commit mode "sometimes"');
+
+        $this->create_engine($client)->flush(new SearchableModel());
     }
 
     public function test_delete_document_from_core(): void

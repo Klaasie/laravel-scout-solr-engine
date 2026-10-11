@@ -25,6 +25,7 @@ use Solarium\Core\Query\Helper;
 use Solarium\Core\Query\Result\ResultInterface;
 use Solarium\QueryType\Select\Result\Document;
 use Solarium\QueryType\Select\Result\Result;
+use Solarium\QueryType\Update\Query\Query as UpdateQuery;
 
 /**
  * @mixin Client
@@ -60,7 +61,7 @@ class SolrEngine extends Engine
         })->filter()->values()->all();
 
         $update->addDocuments($documents);
-        $update->addCommit();
+        $this->addCommit($update);
 
         return $this->client->update($update, $this->client->endpointFor($models->first()));
     }
@@ -77,7 +78,7 @@ class SolrEngine extends Engine
                 ->values()
                 ->all()
         );
-        $delete->addCommit();
+        $this->addCommit($delete);
 
         $this->client->update($delete, $this->client->endpointFor($models->first()));
     }
@@ -171,7 +172,7 @@ class SolrEngine extends Engine
     {
         $query = $this->client->createUpdate();
         $query->addDeleteQuery('*:*');
-        $query->addCommit();
+        $this->addCommit($query);
 
         $this->client->update($query, $this->client->endpointFor($model));
     }
@@ -184,6 +185,31 @@ class SolrEngine extends Engine
     public function deleteIndex($name)
     {
         return $this->client->deleteCore($name);
+    }
+
+    /**
+     * Makes indexed changes visible according to scout-solr.update.commit:
+     * "hard" (default) and "soft" commit with every request, "within" asks Solr to
+     * commit within scout-solr.update.commit_within milliseconds, and "none" leaves
+     * it to Solr's own autoCommit settings.
+     */
+    private function addCommit(UpdateQuery $update): void
+    {
+        $mode = (string) $this->config->get('scout-solr.update.commit', 'hard');
+
+        match ($mode) {
+            'hard' => $update->addCommit(),
+            'soft' => $update->addCommit(true),
+            'within' => $update->addParam(
+                'commitWithin',
+                (int) $this->config->get('scout-solr.update.commit_within', 1000)
+            ),
+            'none' => null,
+            default => throw new InvalidArgumentException(sprintf(
+                'Unsupported Solr commit mode "%s". Use "hard", "soft", "within" or "none".',
+                $mode
+            )),
+        };
     }
 
     protected function performSearch(Builder $builder, array $options = []): mixed

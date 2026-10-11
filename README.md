@@ -98,6 +98,23 @@ With the official `solr` Docker image, the config sets live outside the Solr hom
 
 `docker exec <container> cp -r /opt/solr/server/solr/configsets /var/solr/data/`
 
+### Commits and bulk imports
+
+By default every update is followed by a hard commit, so changes are searchable straight away. For large `scout:import` runs that is slow; choose another strategy in `.env`:
+
+```dotenv
+SOLR_COMMIT=within        # hard (default), soft, within or none
+SOLR_COMMIT_WITHIN=1000   # milliseconds, used by "within"
+```
+
+- `soft` commits with every update but defers flushing to disk, so changes are still visible immediately.
+- `within` lets Solr batch commits and make changes visible within the given time; the fastest option for imports.
+- `none` leaves committing to the `autoCommit`/`autoSoftCommit` settings in your `solrconfig.xml`.
+
+### Soft deletes
+
+Scout's `soft_delete` option works as usual: soft-deleted models stay in the index with a `__soft_deleted` flag, are excluded from searches by default, and can be included with `withTrashed()` or `onlyTrashed()`.
+
 ### HTTP adapter and timeouts
 
 By default Solarium's cURL adapter is used with a 5 second timeout. Change it in `.env`:

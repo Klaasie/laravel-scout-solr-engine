@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Configurable commit strategy for updates, deletes and flushes (`SOLR_COMMIT`: `hard`, `soft`, `within` or `none`; `SOLR_COMMIT_WITHIN` in milliseconds). The default remains a hard commit.
+- `scout-solr.soft_delete_field` (`SOLR_SOFT_DELETE_FIELD`) setting.
+
+### Fixed
+- Scout soft deletes (`scout.soft_delete`) now work: Scout's `__soft_deleted` flag is stored as `scout_soft_deleted_i`, since Solr's schemaless mode wouldn't create a `__soft_deleted` field and every default search failed with "undefined field". If your schema already defines `__soft_deleted`, set `SOLR_SOFT_DELETE_FIELD=__soft_deleted`.
 
 ## [4.0.0] - 2026-10-11
 See [UPGRADE.md](UPGRADE.md) for upgrade steps from 3.x.

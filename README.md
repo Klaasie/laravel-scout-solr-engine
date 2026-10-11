@@ -247,3 +247,10 @@ SOLR_HOST=localhost vendor/bin/phpunit --testsuite Integration
 Set `SOLR_VERSION` to test against another Solr image tag, e.g. `SOLR_VERSION=8.11 docker compose up -d`.
 
 They create a `scout_books_test` core from Solr's `_default` config set and clear it before each test.
+
+CI requires 100% line coverage across the unit and integration tests together; uncovered lines are marked on the pull request. To check locally (with Solr running and pcov or Xdebug enabled):
+
+```bash
+SOLR_HOST=localhost vendor/bin/phpunit --coverage-clover clover.xml
+php .github/scripts/check-coverage.php clover.xml 100
+```
